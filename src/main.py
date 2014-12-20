@@ -4,7 +4,7 @@
 import os
 
 import pandas as pd
-from flask import Flask
+from flask import Flask, send_from_directory
 app = Flask(__name__)
 
 
@@ -59,6 +59,12 @@ def receita():
             break
     page_receita += "    </tbody> </table>"
     return page_receita
+
+
+@app.route('/sankey/<path:filename>')
+def sankey(filename):
+    return send_from_directory('sankey', filename)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
