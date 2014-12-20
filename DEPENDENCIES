@@ -1,0 +1,11 @@
+#wget
+#unzip
+
+gcc
+python-dev
+g++
+
+pandas
+flask
+
+gunicorn
