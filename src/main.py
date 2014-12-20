@@ -8,7 +8,7 @@ from flask import Flask
 app = Flask(__name__)
 
 
-csv_receita = os.path.join("..","data","receitas_min.csv")
+csv_receita = os.path.join("..","data","receita-2008-01.csv")
 df_receita = pd.read_csv(csv_receita)
 
 page_receita = """
@@ -49,10 +49,10 @@ def receita():
     global df_receita
     count = 0
     for row in df_receita.iterrows():
-        page_receita += "<tr>"
+        page_receita += "<tr>\n"
         for i in range(6):
-            page_receita += "<td>%s</td>" % row[1][i]
-        page_receita += "</tr>"
+            page_receita += "<td>%s</td>\n" % row[1][i]
+        page_receita += "</tr>\n"
         # Avoids too much data...
         count += 1
         if count == 1000:
