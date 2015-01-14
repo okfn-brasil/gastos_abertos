@@ -2,7 +2,7 @@
 
 from setuptools import setup
 
-project = "gastosabertos
+project = "gastosabertos"
 
 setup(
     name=project,
