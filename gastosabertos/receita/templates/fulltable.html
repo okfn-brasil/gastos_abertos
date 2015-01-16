@@ -14,6 +14,15 @@ $(document).ready( function () {
     $('#table_id').DataTable();
 } );
 </script>
+<div id="table-year-selector">
+	<label>Ano:
+		<select>
+			{% for year in years %}
+				<option value="{{year}}">{{year}}</option>
+			{% endfor %}
+		</select>
+	</label>
+</div>
 <table id="table_id" class="display">
     <thead>
         <tr>

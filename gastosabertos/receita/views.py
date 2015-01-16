@@ -10,15 +10,29 @@ receita = Blueprint('receita', __name__,
                     static_folder='static',
                     static_url_path='/receita/static')
 
-csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
-df_receita = pd.read_csv(csv_receita, encoding='utf8')
+# csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
+# df_receita = pd.read_csv(csv_receita, encoding='utf8')
 
-@receita.route('/receita')
-@receita.route('/receita/<int:page>')
-def receita_table(page=0):
-    receita_data = df_receita.iterrows()
+years = range(2008, 2015)
 
-    return render_template('fulltable.html', receita_data=receita_data)
+
+def get_year_data(year):
+    csv_receita = os.path.join(
+        receita.root_path,
+        'static',
+        'receita-%s-01.csv' %
+        year)
+    return pd.read_csv(csv_receita, encoding='utf8').iterrows()
+
+
+@receita.route('/receita/<int:year>')
+@receita.route('/receita/<int:year>/<int:page>')
+def receita_table(year, page=0):
+    receita_data = get_year_data(year)
+    return render_template(
+        'fulltable.html',
+        receita_data=receita_data,
+        years=years)
 
 
 @receita.route('/sankey/<path:filename>')
