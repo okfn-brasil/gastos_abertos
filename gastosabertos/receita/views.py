@@ -17,6 +17,7 @@ years = range(2008, 2015)
 
 
 def get_year_data(year):
+    # TODO correct real year, an not month 01
     csv_receita = os.path.join(
         receita.root_path,
         'static',
