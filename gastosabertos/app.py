@@ -5,7 +5,7 @@ import os
 from flask import Flask, request, render_template
 from flask.ext.babel import Babel
 
-from .config import DefaultConfig,INSTANCE_FOLDER_PATH
+from .config import DefaultConfig, INSTANCE_FOLDER_PATH
 from .receita import receita
 
 # For import *

@@ -4,7 +4,7 @@ import os
 
 from utils import make_dir
 
-INSTANCE_FOLDER_PATH = os.path.join('/tmp', 'instance')
+INSTANCE_FOLDER_PATH = '/tmp'
 
 class BaseConfig(object):
 
