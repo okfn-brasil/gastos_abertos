@@ -22,6 +22,7 @@ setup(
         'Flask-Testing',
         'nose',
         'fabric',
+        'pandas'
     ],
     test_suite='tests',
     classifiers=[
