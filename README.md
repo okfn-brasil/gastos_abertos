@@ -2,4 +2,20 @@
 gastos_abertos
 ==============
 
-Código principal do projeto Gastos Abertos.
+Main code of the Gastos Abertos project.
+
+We are using the Flask micro framework.
+
+
+Installation (deb like systems):
+
+1. install virtualenv:
+    $ sudo apt-get install python-virtualenv
+
+2. Initiate a virtual environment you'll use with th
+    $ virtualenv venv
+    $ virtualeven venc/bin/activate
+
+3. 
+
+ 
