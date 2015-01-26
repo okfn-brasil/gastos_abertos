@@ -19,7 +19,7 @@ def run():
 def test():
     """Run tests."""
 
-    return True
+    return
 
 if __name__ == "__main__":
     manager.run()
