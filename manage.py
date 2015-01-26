@@ -15,6 +15,14 @@ def run():
 
     app.run()
 
+@manager.command
+def test():
+    """Run tests."""
+
+    return True
+
+
+
 
 manager.add_option('-c', '--config',
                    dest="config",
