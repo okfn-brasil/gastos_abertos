@@ -20,11 +20,9 @@ setup(
         'Flask-Script',
         'Flask-Babel',
         'Flask-Testing',
-        'nose',
         'fabric',
         'pandas'
     ],
-    test_suite='tests',
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
