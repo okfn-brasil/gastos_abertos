@@ -9,7 +9,7 @@ project = "gastosabertos"
 
 env.user = 'gastosabertos'
 env.hosts = ['gastosabertos.org']
-env.key_filename = '~/.ssh/ga_id_rsa'
+#env.key_filename = '~/.ssh/ga_id_rsa'
 
 def reset():
     """
