@@ -1,0 +1,49 @@
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css"
+href="//cdn.datatables.net/1.10.4/css/jquery.dataTables.css">
+
+<!-- jQuery -->
+<script type="text/javascript" charset="utf8"
+src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+
+<!-- DataTables -->
+<script type="text/javascript" charset="utf8"
+src="//cdn.datatables.net/1.10.4/js/jquery.dataTables.js"></script>
+<script>
+$(document).ready( function () {
+    $('#table_id').DataTable();
+} );
+</script>
+<div id="table-year-selector">
+	<label>Ano:
+		<select>
+			{% for year in years %}
+				<option value="{{year}}">{{year}}</option>
+			{% endfor %}
+		</select>
+	</label>
+</div>
+<table id="table_id" class="display">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Data</th>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Previsto</th>
+            <th>Realizado</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in receita_data %}
+        <tr>
+            {% for c in row[1] %}
+                <td>
+                    {{c}}
+                </td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
