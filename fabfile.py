@@ -3,14 +3,13 @@
 # http://docs.fabfile.org/en/1.5/tutorial.html
 
 from fabric.api import *
+from fabric.network import ssh
 
 project = "gastosabertos"
 
-# the user to use for the remote commands
-env.user = ''
-# the servers where the commands are executed
-env.hosts = ['']
-
+env.user = 'gastosabertos'
+env.hosts = ['gastosabertos.org']
+env.key_filename = '~/.ssh/ga_id_rsa'
 
 def reset():
     """
@@ -32,6 +31,15 @@ def setup():
     local("python setup.py install")
     reset()
 
+def deploy():
+    """
+    Deploy project to Gastos Abertos server
+    """
+
+    project_dir = '/home/gastosabertos/gastosabertos'
+    with cd(project_dir):
+        run("git pull")
+#        run("touch app.wsgi")
 
 def d():
     """

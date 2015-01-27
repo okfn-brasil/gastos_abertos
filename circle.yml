@@ -1,3 +1,9 @@
 dependencies:
     pre:
         - sudo rm /home/ubuntu/virtualenvs/venv-system/lib/python2.7/no-global-site-packages.txt & easy_install numpy==1.7.0
+
+deployment:
+    production:
+        branch: master
+        commands:
+            - fab deploy
