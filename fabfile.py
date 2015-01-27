@@ -36,7 +36,7 @@ def deploy():
     Deploy project to Gastos Abertos server
     """
 
-    project_dir = '/home/gastosabertos/gastosabertos'
+    project_dir = '/home/gastosabertos/gastos_abertos'
     with cd(project_dir):
         run("git pull")
 #        run("touch app.wsgi")
