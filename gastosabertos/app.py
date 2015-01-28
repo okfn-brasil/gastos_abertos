@@ -6,6 +6,7 @@ from flask import Flask, request, render_template
 from flask.ext.babel import Babel
 
 from .config import DefaultConfig, INSTANCE_FOLDER_PATH
+from .extensions import db
 from .receita import receita
 
 # For import *
@@ -52,6 +53,9 @@ def configure_app(app, config=None):
 
 
 def configure_extensions(app):
+    # flask-sqlalchemy
+    db.init_app(app)
+
     # flask-babel
     babel = Babel(app)
 

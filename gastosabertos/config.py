@@ -23,12 +23,18 @@ class BaseConfig(object):
     LOG_FOLDER = os.path.join(INSTANCE_FOLDER_PATH, 'logs')
     make_dir(LOG_FOLDER)
 
+
 class DefaultConfig(BaseConfig):
 
     DEBUG = True
     # Flask-babel: http://pythonhosted.org/Flask-Babel/
     ACCEPT_LANGUAGES = ['pt-br']
     BABEL_DEFAULT_LOCALE = 'en'
+
+    # Flask-Sqlalchemy: http://packages.python.org/Flask-SQLAlchemy/config.html
+    SQLALCHEMY_ECHO = True
+    # SQLITE for prototyping.
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + INSTANCE_FOLDER_PATH + '/db.sqlite'
 
 
 class TestConfig(BaseConfig):
