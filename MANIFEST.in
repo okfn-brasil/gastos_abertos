@@ -13,6 +13,12 @@ recursive-include gastosabertos/static *
 # Translations
 recursive-include gastosabertos/translations *
 
+recursive-include gastosabertos/receita/static *
+recursive-include gastosabertos/receita/templates *
+
+
+
+
 # Excluding
 recursive-exclude gastosabertos *.pyc
 recursive-exclude tests *.pyc
