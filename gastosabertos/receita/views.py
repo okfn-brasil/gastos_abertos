@@ -99,7 +99,9 @@ class GroupedRevenueApi(restful.Resource):
 
         if not years:
             revenue_data = revenue_query_base.group_by(revenue_levels[level])
-            revenue_grouped = [{'category_code': rev[0], 'total pref': str(rev[1]), 'total outcome': str(rev[2])} for rev in revenue_data.all()]
+            revenue_grouped = [{'category_code': rev[0],
+                                'total_predicted': str(rev[1]),
+                                'total_outcome': str(rev[2])} for rev in revenue_data.all()]
             return revenue_grouped
 
         revenue_grouped = {}
@@ -108,7 +110,9 @@ class GroupedRevenueApi(restful.Resource):
             revenue_data = revenue_query_base.filter(extract('year', Revenue.date) == year)\
                                        .group_by(revenue_levels[level])
 
-            revenue_grouped[year] = [{'category_code': rev[0], 'total pref': str(rev[1]), 'total outcome': str(rev[2])} for rev in revenue_data.all()]
+            revenue_grouped[year] = [{'category_code': rev[0],
+                                      'total_predicted': str(rev[1]),
+                                      'total outcome': str(rev[2])} for rev in revenue_data.all()]
 
         return revenue_grouped
 
