@@ -21,6 +21,7 @@ setup(
         'Flask-Script',
         'Flask-Babel',
         'Flask-Testing',
+        'Flask-Restful',
         'fabric',
         'pandas'
     ],
