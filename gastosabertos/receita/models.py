@@ -21,3 +21,12 @@ class Revenue(db.Model):
     rubric = Column(db.Integer)
     paragraph = Column(db.Integer)
     subparagraph = Column(db.Integer)
+
+
+class RevenueCode(db.Model):
+
+    __tablename__ = 'revenuecode'
+
+    id = Column(db.Integer, primary_key=True)
+    code = Column(db.String(30), nullable=False)
+    description = Column(db.Text(), nullable=False)
