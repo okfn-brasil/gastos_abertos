@@ -2,7 +2,7 @@
 
 import os
 import pandas as pd
-from sqlalchemy import and_, extract
+from sqlalchemy import and_, extract, func
 from datetime import datetime
 
 from flask import (Blueprint, render_template)
@@ -13,22 +13,26 @@ from flask.ext.restful.reqparse import RequestParser
 from .models import Revenue
 from gastosabertos.extensions import db
 
-parser = RequestParser()
-parser.add_argument('page', type=int, default=0)
-parser.add_argument('per_page_num', type=int, default=100)
-parser.add_argument('years', type=int, action='append')
-
+# Blueprint for Receita
 receita = Blueprint('receita', __name__,
                     template_folder='templates',
                     static_folder='static',
                     static_url_path='/receita/static')
 
+# Create the restful API
 receita_api = restful.Api(receita, prefix="/api/v1")
 
 class Date(fields.Raw):
     def format(self, value):
         return str(value)
 
+# Parser for RevenueAPI arguments
+revenue_list_parser = RequestParser()
+revenue_list_parser.add_argument('page', type=int, default=0)
+revenue_list_parser.add_argument('per_page_num', type=int, default=100)
+revenue_list_parser.add_argument('years', type=int, action='append')
+
+# Fields for RevenueAPI data marshal
 revenue_fields = { 'id': fields.Integer()
                  , 'date': Date
                  , 'description': fields.String()
@@ -41,7 +45,7 @@ class RevenueApi(restful.Resource):
     @restful.marshal_with(revenue_fields)
     def get(self):
         # Extract the argumnets in GET request
-        args = parser.parse_args()
+        args = revenue_list_parser.parse_args()
         page = args['page']
         per_page_num = args['per_page_num']
         years = args['years']
@@ -66,7 +70,50 @@ class RevenueApi(restful.Resource):
 
         return revenue_data.all()
 
-receita_api.add_resource(RevenueApi, '/receita/hello')
+# Revenues levels Dict for GroupedRevenueApi
+revenue_levels = {}
+revenue_levels[0] = Revenue.economical_category
+revenue_levels[1] = Revenue.economical_subcategory
+
+# Parser for GroupedRevenueApi
+grouped_revenue_parser = RequestParser()
+grouped_revenue_parser.add_argument('level', type=int, default=0)
+grouped_revenue_parser.add_argument('years', type=int, action='append')
+
+# Fields for GroupedRevenueApi data marshal
+grouped_fields = { 'category_code': fields.String
+                 , 'Total Predicted': fields.Float()
+                 , 'Total Outcome': fields.Float() }
+
+class GroupedRevenueApi(restful.Resource):
+
+    def get(self):
+        args = grouped_revenue_parser.parse_args()
+        years = args['years']
+        level = args['level']
+
+        # Create the query
+        revenue_query_base = db.session.query(Revenue.economical_category,
+                                              func.sum(Revenue.monthly_predicted).label('Total predicted'),
+                                              func.sum(Revenue.monthly_outcome).label('Total outcome'))
+
+        if not years:
+            revenue_data = revenue_query_base.group_by(revenue_levels[level])
+            revenue_grouped = [{'category_code': rev[0], 'total pref': str(rev[1]), 'total outcome': str(rev[2])} for rev in revenue_data.all()]
+            return revenue_grouped
+
+        revenue_grouped = {}
+        for year in years:
+            year = str(year)
+            revenue_data = revenue_query_base.filter(extract('year', Revenue.date) == year)\
+                                       .group_by(revenue_levels[level])
+
+            revenue_grouped[year] = [{'category_code': rev[0], 'total pref': str(rev[1]), 'total outcome': str(rev[2])} for rev in revenue_data.all()]
+
+        return revenue_grouped
+
+receita_api.add_resource(RevenueApi, '/receita/list')
+receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
 # df_receita = pd.read_csv(csv_receita, encoding='utf8')
