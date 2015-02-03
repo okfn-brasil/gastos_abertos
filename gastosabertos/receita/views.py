@@ -74,10 +74,14 @@ class RevenueApi(restful.Resource):
 revenue_levels = {}
 revenue_levels[0] = Revenue.economical_category
 revenue_levels[1] = Revenue.economical_subcategory
+revenue_levels[2] = Revenue.source
+revenue_levels[3] = Revenue.rubric
+revenue_levels[4] = Revenue.paragraph
+revenue_levels[5] = Revenue.subparagraph
 
 # Parser for GroupedRevenueApi
 grouped_revenue_parser = RequestParser()
-grouped_revenue_parser.add_argument('level', type=int, default=0)
+grouped_revenue_parser.add_argument('levels', type=int, action='append')
 grouped_revenue_parser.add_argument('years', type=int, action='append')
 
 # Fields for GroupedRevenueApi data marshal
@@ -90,18 +94,21 @@ class GroupedRevenueApi(restful.Resource):
     def get(self):
         args = grouped_revenue_parser.parse_args()
         years = args['years']
-        level = args['level']
+        levels = args['levels']
 
         # Create the query
-        revenue_query_base = db.session.query(Revenue.economical_category,
-                                              func.sum(Revenue.monthly_predicted).label('Total predicted'),
-                                              func.sum(Revenue.monthly_outcome).label('Total outcome'))
+        levels_columns = [ revenue_levels[l] for l in levels ]
+        # Sum Outcome and predicted values
+        complete_query = levels_columns + [ func.sum(Revenue.monthly_predicted).label('Total predicted'),
+                                            func.sum(Revenue.monthly_outcome).label('Total outcome') ]
+
+        revenue_query_base = db.session.query(*complete_query)
 
         if not years:
-            revenue_data = revenue_query_base.group_by(revenue_levels[level])
-            revenue_grouped = [{'category_code': rev[0],
-                                'total_predicted': str(rev[1]),
-                                'total_outcome': str(rev[2])} for rev in revenue_data.all()]
+            revenue_data = revenue_query_base.group_by(*levels_columns)
+            revenue_grouped = [{'category_code': rev[:len(levels)],
+                                'total_predicted': str(rev[len(levels)]),
+                                'total_outcome': str(rev[len(levels) + 1])} for rev in revenue_data.all()]
             return revenue_grouped
 
         revenue_grouped = {}
