@@ -2,6 +2,8 @@
 
 import os
 import pandas as pd
+from sqlalchemy import and_, extract
+from datetime import datetime
 
 from flask import (Blueprint, render_template)
 from flask.ext import restful
@@ -12,9 +14,9 @@ from .models import Revenue
 from gastosabertos.extensions import db
 
 parser = RequestParser()
-parser.add_argument('page', type=int)
-parser.add_argument('per_page_num', type=int)
-
+parser.add_argument('page', type=int, default=0)
+parser.add_argument('per_page_num', type=int, default=100)
+parser.add_argument('years', type=int, action='append')
 
 receita = Blueprint('receita', __name__,
                     template_folder='templates',
@@ -38,15 +40,31 @@ class RevenueApi(restful.Resource):
 
     @restful.marshal_with(revenue_fields)
     def get(self):
+        # Extract the argumnets in GET request
         args = parser.parse_args()
         page = args['page']
         per_page_num = args['per_page_num']
+        years = args['years']
 
-        revenue_data = db.session.query(Revenue).offset(page*per_page_num)\
+        # Create the query
+        revenue_data = db.session.query(Revenue)
+
+        if years:
+            # Filter years
+            if len(years) == 2:
+                year_min = "{}-1-1".format(years[0])
+                year_max = "{}-12-31".format(years[1])
+                revenue_data = revenue_data.filter(and_(Revenue.date >= datetime.strptime(year_min, '%Y-%m-%d')),
+                                                        Revenue.date <= datetime.strptime(year_max, '%Y-%m-%d'))
+            elif len(years) == 1:
+                year = str(years[0])
+                revenue_data = revenue_data.filter(extract('year', Revenue.date) == year)
+
+        # Limit que number of results per page
+        revenue_data = revenue_data.offset(page*per_page_num)\
                             .limit(per_page_num)\
-                            .all()
 
-        return revenue_data
+        return revenue_data.all()
 
 receita_api.add_resource(RevenueApi, '/receita/hello')
 
