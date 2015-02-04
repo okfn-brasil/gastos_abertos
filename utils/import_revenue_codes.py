@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-''' Read a TXT, extract revenue codes and descriptions, and insert them in the DB.
+''' Read a TXT, extract revenue codes and descriptions, and insert them in the
+DB.
 
 Usage:
     ./import_revenue_code TXT_FILE
@@ -27,21 +28,26 @@ db.app = app
 def clear_zeros(s):
     return '.'.join([str(int(i)) for i in s.split('.')])
 
+
 def get_codes(file_in):
     codes = {}
     with codecs.open(file_in, encoding="utf-8") as txt:
         for line in txt.readlines():
-            r = re.match(
+            matched = re.match(
                 "(?P<code>\d{2,20}(\.\d\d){2})\s*(?P<descr>(\S+\s{1,3})+)",
                 line.strip())
-            if r:
-                code = clear_zeros(r.group("code"))
-                if not codes.has_key(code):
-                    codes[clear_zeros(code)] = r.group("descr").strip()
+            if matched:
+                code = clear_zeros(matched.group("code"))
+                if code not in codes:
+                    codes[clear_zeros(code)] = matched.group("descr").strip()
+            else:
+                print("Rejected line: ", line)
     return codes
 
+
 def insert_codes(codes):
-    rows = [{"code": code, "description": description} for code, description in codes.items()]
+    rows = [{"code": code, "description": description}
+            for code, description in codes.items()]
     ins = insert(RevenueCode.__table__, rows)
     db.session.execute(ins)
     db.session.commit()
