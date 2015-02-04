@@ -8,7 +8,17 @@ Options:
     -h --help   Show this message.
 '''
 import re
+
 from docopt import docopt
+
+from sqlalchemy.sql.expression import insert
+
+from gastosabertos import create_app
+from gastosabertos.extensions import db
+from gastosabertos.receita.models import Revenue
+
+app = create_app()
+db.app = app
 
 
 def clear_zeros(s):
@@ -16,16 +26,19 @@ def clear_zeros(s):
 
 
 def codes_to_dict(file_in):
-    codes = {}
     with open(file_in) as txt:
         for line in txt.readlines():
             r = re.match(
                 "(?P<code>\d{2,20}(\.\d\d){2})\s*(?P<descr>(\S+\s{1,3})+)",
                 line.strip())
             if r:
-                code = clear_zeros(r.group("code"))
-                codes[code] = r.group("descr").strip()
-    print(codes)
+                row = {
+                    "code": clear_zeros(r.group("code")),
+                    "description": r.group("descr").strip()
+                }
+                ins = insert(Revenue.__table__, row)
+                db.session.execute(ins)
+                db.session.commit()
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
