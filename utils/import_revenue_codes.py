@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 ''' Read a TXT, extract revenue codes and descriptions, and insert them in the DB.
 
 Usage:
@@ -10,12 +12,13 @@ Options:
 import re
 
 from docopt import docopt
+import codecs
 
 from sqlalchemy.sql.expression import insert
 
 from gastosabertos import create_app
 from gastosabertos.extensions import db
-from gastosabertos.receita.models import Revenue
+from gastosabertos.receita.models import RevenueCode
 
 app = create_app()
 db.app = app
@@ -24,22 +27,26 @@ db.app = app
 def clear_zeros(s):
     return '.'.join([str(int(i)) for i in s.split('.')])
 
-
-def codes_to_dict(file_in):
-    with open(file_in) as txt:
+def get_codes(file_in):
+    codes = {}
+    with codecs.open(file_in, encoding="utf-8") as txt:
         for line in txt.readlines():
             r = re.match(
                 "(?P<code>\d{2,20}(\.\d\d){2})\s*(?P<descr>(\S+\s{1,3})+)",
                 line.strip())
             if r:
-                row = {
-                    "code": clear_zeros(r.group("code")),
-                    "description": unicode(r.group("descr").strip())
-                }
-                ins = insert(Revenue.__table__, row)
-                db.session.execute(ins)
-                db.session.commit()
+                code = clear_zeros(r.group("code"))
+                if not codes.has_key(code):
+                    codes[clear_zeros(code)] = r.group("descr").strip()
+    return codes
+
+def insert_codes(codes):
+    rows = [{"code": code, "description": description} for code, description in codes.items()]
+    ins = insert(RevenueCode.__table__, rows)
+    db.session.execute(ins)
+    db.session.commit()
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
-    codes_to_dict(arguments['TXT_FILE'])
+    codes = get_codes(arguments['TXT_FILE'])
+    insert_codes(codes)
