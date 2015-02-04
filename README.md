@@ -1,4 +1,5 @@
 [![Stories in Ready](https://badge.waffle.io/okfn-brasil/gastos_abertos.png?label=ready&title=Ready)](https://waffle.io/okfn-brasil/gastos_abertos)
+
 Gastos Abertos
 ==============
 
@@ -33,4 +34,5 @@ Install python's dependencies:
 Start the server:
 
     fab reset
+    python manage.py initdb
     python manage.py run
