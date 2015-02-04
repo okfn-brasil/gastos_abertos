@@ -34,7 +34,7 @@ def codes_to_dict(file_in):
             if r:
                 row = {
                     "code": clear_zeros(r.group("code")),
-                    "description": r.group("descr").strip()
+                    "description": unicode(r.group("descr").strip())
                 }
                 ins = insert(Revenue.__table__, row)
                 db.session.execute(ins)
