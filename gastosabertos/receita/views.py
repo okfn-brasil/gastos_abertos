@@ -10,7 +10,7 @@ from flask.ext import restful
 from flask.ext.restful import fields
 from flask.ext.restful.reqparse import RequestParser
 
-from .models import Revenue
+from .models import Revenue, RevenueCode
 from gastosabertos.extensions import db
 
 # Blueprint for Receita
@@ -123,8 +123,34 @@ class GroupedRevenueApi(restful.Resource):
 
         return revenue_grouped
 
+
+# Parser for RevenueCodeAPI arguments
+revenue_code_parser = RequestParser()
+# type of argument defaults to unicode in python2 and str in python3
+revenue_code_parser.add_argument('code', action='append')
+
+# Fields for RevenueCodeAPI data marshal
+# revenue_code_fields = {'code': fields.String()}
+revenue_code_fields = {'description': fields.String()}
+
+
+class RevenueCodeApi(restful.Resource):
+
+    @restful.marshal_with(revenue_code_fields)
+    def get(self):
+        # Extract the argumnets in GET request
+        args = revenue_code_parser.parse_args()
+        code = args['code']
+
+        # Create the query
+        descriptions = db.session.query(RevenueCode)
+        descriptions = descriptions.filter(RevenueCode.code == code)
+        return descriptions.all()
+
+
 receita_api.add_resource(RevenueApi, '/receita/list')
 receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
+receita_api.add_resource(RevenueCodeApi, '/receita/code')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
 # df_receita = pd.read_csv(csv_receita, encoding='utf8')
