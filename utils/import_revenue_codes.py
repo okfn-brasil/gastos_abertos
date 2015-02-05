@@ -34,7 +34,7 @@ def format_code(s):
     elif int(b):
         formated = '.'.join([a, b])
     else:
-        formated = a
+        formated = a.replace('0', '').strip('.')
     return formated
 
 
