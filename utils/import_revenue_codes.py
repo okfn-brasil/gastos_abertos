@@ -25,8 +25,17 @@ app = create_app()
 db.app = app
 
 
-def clear_zeros(s):
-    return '.'.join([str(int(i)) for i in s.split('.')])
+def format_code(s):
+    # return '.'.join([str(int(i)) for i in s.split('.')])
+    a, b, c = [str(int(i)) for i in s.split('.')]
+    a = '.'.join(a)
+    if int(c):
+        formated = '.'.join([a, b, c])
+    elif int(b):
+        formated = '.'.join([a, b])
+    else:
+        formated = a
+    return formated
 
 
 def get_codes(file_in):
@@ -37,9 +46,9 @@ def get_codes(file_in):
                 "(?P<code>\d{2,20}(\.\d\d){2})\s*(?P<descr>(\S+\s{1,3})+)",
                 line.strip())
             if matched:
-                code = clear_zeros(matched.group("code"))
+                code = format_code(matched.group("code"))
                 if code not in codes:
-                    codes[clear_zeros(code)] = matched.group("descr").strip()
+                    codes[code] = matched.group("descr").strip()
             else:
                 print("Rejected line: ", line)
     return codes
