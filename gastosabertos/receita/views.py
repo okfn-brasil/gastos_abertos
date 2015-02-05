@@ -147,10 +147,38 @@ class RevenueCodeApi(restful.Resource):
         descriptions = descriptions.filter(RevenueCode.code == code)
         return descriptions.all()
 
+# Parser for RevenueCodeAPI arguments
+revenueseries_code_parser = RequestParser()
+# type of argument defaults to unicode in python2 and str in python3
+revenueseries_code_parser.add_argument('code', action='append')
+
+
+class RevenueSeriesApi(restful.Resource):
+
+    def get(self):
+        # Extract the argumnets in GET request
+        args = revenue_code_parser.parse_args()
+        codes = args['code']
+
+        series = {}
+        for code in codes:
+            revenues_results = db.session.query(Revenue.date,
+                                                Revenue.monthly_predicted,
+                                                Revenue.monthly_outcome)\
+                                    .filter(Revenue.code == code).all()
+
+            series[code] = {'date': [str(r[0]) for r in revenues_results],
+                            'predicted': [str(r[1]) for r in revenues_results],
+                            'outcome': [str(r[2]) for r in revenues_results]}
+
+        return series
+
+
 
 receita_api.add_resource(RevenueApi, '/receita/list')
 receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
+receita_api.add_resource(RevenueSeriesApi, '/receita/series')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
 # df_receita = pd.read_csv(csv_receita, encoding='utf8')
