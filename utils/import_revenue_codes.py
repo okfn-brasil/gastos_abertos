@@ -20,7 +20,6 @@ from sqlalchemy.sql.expression import insert
 from gastosabertos import create_app
 from gastosabertos.extensions import db
 from gastosabertos.receita.models import RevenueCode
-from format_revenue_code import format_code
 
 app = create_app()
 db.app = app
@@ -34,7 +33,7 @@ def get_codes(file_in):
                 "(?P<code>\d{2,20}(\.\d\d){2})\s*(?P<descr>(\S+\s{1,3})+)",
                 line.strip())
             if matched:
-                code = format_code(matched.group("code"))
+                code = RevenueCode.format_code(matched.group("code"))
                 if code not in codes:
                     codes[code] = matched.group("descr").strip()
             else:
