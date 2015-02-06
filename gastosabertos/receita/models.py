@@ -32,8 +32,8 @@ class RevenueCode(db.Model):
     # code = Column(db.String(30), primary_key=True)
     description = Column(db.Text(), nullable=False)
 
-    @classmethod
-    def format_code(cls, code):
+    @staticmethod
+    def format_code(code):
         # return '.'.join([str(int(i)) for i in code.split('.')])
         a, b, c = [str(int(i)) for i in code.split('.')]
         a = '.'.join(a)
