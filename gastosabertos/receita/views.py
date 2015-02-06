@@ -141,7 +141,7 @@ class RevenueCodeApi(restful.Resource):
         for code in codes:
             query = db.session.query(RevenueCode)
             try:
-                formated_code = format_code(code)
+                formated_code = RevenueCode.format_code(code)
             except:
                 formated_code = code
             obj = query.filter(RevenueCode.code == formated_code).first()
