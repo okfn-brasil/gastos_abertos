@@ -127,25 +127,26 @@ class GroupedRevenueApi(restful.Resource):
 # Parser for RevenueCodeAPI arguments
 revenue_code_parser = RequestParser()
 # type of argument defaults to unicode in python2 and str in python3
-revenue_code_parser.add_argument('code')
-
-# Fields for RevenueCodeAPI data marshal
-# revenue_code_fields = {'code': fields.String()}
-revenue_code_fields = {'description': fields.String()}
+revenue_code_parser.add_argument('code', action='append')
 
 
 class RevenueCodeApi(restful.Resource):
 
-    @restful.marshal_with(revenue_code_fields)
     def get(self):
         # Extract the argumnets in GET request
         args = revenue_code_parser.parse_args()
-        code = args['code']
+        codes = args['code']
 
-        # Create the query
-        descriptions = db.session.query(RevenueCode)
-        descriptions = descriptions.filter(RevenueCode.code == code)
-        return descriptions.first()
+        descriptions = {}
+        for code in codes:
+            query = db.session.query(RevenueCode)
+            obj = query.filter(RevenueCode.code == code).first()
+            if obj:
+                descriptions[code] = obj.description
+            else:
+                descriptions[code] = 0
+        return descriptions
+
 
 # Parser for RevenueCodeAPI arguments
 revenueseries_code_parser = RequestParser()
