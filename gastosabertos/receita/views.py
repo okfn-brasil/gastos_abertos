@@ -12,7 +12,6 @@ from flask.ext.restful.reqparse import RequestParser
 
 from .models import Revenue, RevenueCode
 from gastosabertos.extensions import db
-from utils.format_revenue_code import format_code
 
 # Blueprint for Receita
 receita = Blueprint('receita', __name__,
@@ -178,7 +177,6 @@ class RevenueSeriesApi(restful.Resource):
                             'outcome': [str(r[2]) for r in revenues_results]}
 
         return series
-
 
 
 receita_api.add_resource(RevenueApi, '/receita/list')
