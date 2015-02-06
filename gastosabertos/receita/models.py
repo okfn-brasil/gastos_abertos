@@ -27,7 +27,7 @@ class RevenueCode(db.Model):
 
     __tablename__ = 'revenue_code'
 
-    # id = Column(db.Integer, primary_key=True)
-    # code = Column(db.String(30), nullable=False)
-    code = Column(db.String(30), primary_key=True)
+    id = Column(db.Integer, primary_key=True)
+    code = Column(db.String(30), nullable=False)
+    # code = Column(db.String(30), primary_key=True)
     description = Column(db.Text(), nullable=False)
