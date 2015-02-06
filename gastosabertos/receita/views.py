@@ -12,6 +12,7 @@ from flask.ext.restful.reqparse import RequestParser
 
 from .models import Revenue, RevenueCode
 from gastosabertos.extensions import db
+from utils.format_revenue_code import format_code
 
 # Blueprint for Receita
 receita = Blueprint('receita', __name__,
@@ -140,7 +141,11 @@ class RevenueCodeApi(restful.Resource):
         descriptions = {}
         for code in codes:
             query = db.session.query(RevenueCode)
-            obj = query.filter(RevenueCode.code == code).first()
+            try:
+                formated_code = format_code(code)
+            except:
+                formated_code = code
+            obj = query.filter(RevenueCode.code == formated_code).first()
             if obj:
                 descriptions[code] = obj.description
             else:
