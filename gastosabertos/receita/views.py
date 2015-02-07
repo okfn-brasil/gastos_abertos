@@ -167,10 +167,23 @@ class RevenueSeriesApi(restful.Resource):
 
         series = {}
         for code in codes:
-            revenues_results = db.session.query(Revenue.date,
-                                                Revenue.monthly_predicted,
-                                                Revenue.monthly_outcome)\
-                                    .filter(Revenue.code == code).all()
+            # revenues_results = db.session.query(
+            #     Revenue.date,
+            #     Revenue.monthly_predicted,
+            #     Revenue.monthly_outcome)\
+            #     .filter(Revenue.code.like(code+'%')).all()
+            try:
+                formated_code = RevenueCode.format_code(code)
+            except:
+                formated_code = code
+            code_levels = formated_code.split('.')
+            args = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
+            q = db.session.query(
+                Revenue.date,
+                func.sum(Revenue.monthly_predicted),
+                func.sum(Revenue.monthly_outcome))\
+                .filter(and_(*args)).group_by(Revenue.date)
+            revenues_results = q.all()
 
             series[code] = {'date': [str(r[0]) for r in revenues_results],
                             'predicted': [str(r[1]) for r in revenues_results],
