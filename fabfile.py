@@ -39,7 +39,7 @@ def deploy():
     project_dir = '/home/gastosabertos/gastos_abertos'
     with cd(project_dir):
         run("git pull")
-        run("workon ga")
+        run("source /home/gastosabertos/.virtualenvs/ga/bin/activate")
         run("python setup.py install")
         run("touch wsgi.py")
 
