@@ -50,7 +50,7 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
     #    r = Revenue()
         r = {}
 
-        if len(to_insert) == 100:
+        if len(to_insert) == lines_per_insert:
            insert_rows(to_insert)
            to_insert = []
 
@@ -97,7 +97,7 @@ if  __name__ == '__main__':
     args = {}
     csv_file = arguments['FILE']
     if csv_file:
-        args['csv_file'] = csV_file
+        args['csv_file'] = csv_file
     lines_per_insert = arguments['LINES_PER_INSERT']
     if lines_per_insert:
         args['lines_per_insert'] = lines_per_insert
