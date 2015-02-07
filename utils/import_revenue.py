@@ -97,7 +97,7 @@ if  __name__ == '__main__':
     args = {}
     csv_file = arguments['FILE']
     if csv_file:
-        args['csv_file'] = csV_file
+        args['csv_file'] = csv_file
     lines_per_insert = arguments['LINES_PER_INSERT']
     if lines_per_insert:
         args['lines_per_insert'] = lines_per_insert
