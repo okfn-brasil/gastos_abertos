@@ -124,6 +124,9 @@ class GroupedRevenueApi(restful.Resource):
         return revenue_grouped
 
 
+
+
+
 # Parser for RevenueCodeAPI arguments
 revenue_code_parser = RequestParser()
 # type of argument defaults to unicode in python2 and str in python3
@@ -150,6 +153,42 @@ class RevenueCodeApi(restful.Resource):
             else:
                 descriptions[code] = 0
         return descriptions
+
+# Parser for RevenueTotalApi
+revenue_total_parser = RequestParser()
+revenue_total_parser.add_argument('code', action='append')
+revenue_total_parser.add_argument('years', type=int, action='append')
+
+
+class RevenueTotalApi(restful.Resource):
+
+    def get(self):
+        # Extract the argumnets in GET request
+        args = revenue_total_parser.parse_args()
+        codes = args['code']
+        years = args['years']
+
+        total = {'name': 'Total Outcome',
+                 'colorByPoint': 'true',
+                 'data': []}
+        for code in codes:
+            try:
+                formated_code = RevenueCode.format_code(code)
+            except:
+                formated_code = code
+            code_levels = formated_code.split('.')
+            args = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
+            for year in years:
+                args += [extract('year', Revenue.date) == year]
+            q = db.session.query(Revenue.date, func.sum(Revenue.monthly_outcome))\
+                .filter(and_(*args))
+            revenues_results = q.all()
+
+            total['data'] += [{'name': code,
+                               'y': float(str(revenues_results[0][1]))
+                                }]
+
+        return total
 
 
 # Parser for RevenueCodeAPI arguments
@@ -194,6 +233,7 @@ class RevenueSeriesApi(restful.Resource):
 
 receita_api.add_resource(RevenueApi, '/receita/list')
 receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
+receita_api.add_resource(RevenueTotalApi, '/receita/total')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
 receita_api.add_resource(RevenueSeriesApi, '/receita/series')
 
