@@ -158,7 +158,7 @@ class RevenueCodeApi(restful.Resource):
 revenue_total_parser = RequestParser()
 revenue_total_parser.add_argument('code', action='append')
 revenue_total_parser.add_argument('years', type=int, action='append')
-
+revenue_total_parser.add_argument('drilldown')
 
 class RevenueTotalApi(restful.Resource):
 
@@ -167,10 +167,12 @@ class RevenueTotalApi(restful.Resource):
         args = revenue_total_parser.parse_args()
         codes = args['code']
         years = args['years']
+        drilldown = args['drilldown']
 
         total = {'name': 'Total Outcome',
                  'colorByPoint': 'true',
                  'data': []}
+
         for code in codes:
             try:
                 formated_code = RevenueCode.format_code(code)
@@ -180,13 +182,31 @@ class RevenueTotalApi(restful.Resource):
             args = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
             for year in years:
                 args += [extract('year', Revenue.date) == year]
-            q = db.session.query(Revenue.date, func.sum(Revenue.monthly_outcome))\
-                .filter(and_(*args))
+
+            q = db.session.query(Revenue.code_id,
+                                 RevenueCode.description,
+                                 Revenue.date,
+                                 func.sum(Revenue.monthly_outcome).label('total_outcome'))\
+                    .join(RevenueCode)\
+                    .filter(and_(*args))\
+
+            if drilldown and drilldown == 'true':
+                q = q.group_by(Revenue.code_id)
+            else:
+                revenue_name_query = db.session.query(RevenueCode.description)\
+                                        .filter(RevenueCode.code == code).one()
+                revenue_name = revenue_name_query[0]
+
+            q = q.order_by('total_outcome')
             revenues_results = q.all()
 
-            total['data'] += [{'name': code,
-                               'y': float(str(revenues_results[0][1]))
-                                }]
+            for r in revenues_results:
+                if drilldown and drilldown == 'true':
+                    revenue_name = unicode(r[1])
+
+                total['data'] += [{'name': revenue_name,
+                                   'y': float(str(r[3]))
+                                    }]
 
         return total
 
