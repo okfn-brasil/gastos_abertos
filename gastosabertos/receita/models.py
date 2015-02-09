@@ -10,7 +10,9 @@ class Revenue(db.Model):
     __tablename__ = 'revenue'
 
     id = Column(db.Integer, primary_key=True)
-    code = Column(db.String(30), nullable=False)
+    original_code = Column(db.String(30), nullable=False)
+    code = db.relationship('RevenueCode', backref='revenues')
+    code_id = Column(db.Integer, db.ForeignKey('revenue_code.id'), nullable=True)
     description = Column(db.Text(), nullable=False)
     date = Column(db.Date())
     monthly_predicted = Column(db.DECIMAL(19, 2))
