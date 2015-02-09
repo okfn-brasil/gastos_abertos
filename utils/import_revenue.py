@@ -21,7 +21,7 @@ from gastosabertos.extensions import db
 app = create_app()
 db.app = app
 
-from gastosabertos.receita.models import Revenue
+from gastosabertos.receita.models import Revenue, RevenueCode
 
 def parse_money(money_string):
     if money_string[0] == '-':
@@ -45,6 +45,7 @@ def insert_rows(rows_data):
 def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
     data = pd.read_csv(csv_file, encoding='utf8')
 
+    cache = {}
     to_insert = []
     for row_i, row in data.iterrows():
     #    r = Revenue()
@@ -54,13 +55,31 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
            insert_rows(to_insert)
            to_insert = []
 
-        r['code'] = row['codigo']
+        r['original_code'] = row['codigo']
         r['description'] = unicode(row['descricao'])
         r['date'] = parse_date(row['data'])
         r['monthly_outcome'] = parse_money(row['realizado_mensal'])
         r['monthly_predicted'] = parse_money(row['previsto_mensal'])
         code_parsed = parse_code(row['codigo'])
         r['economical_category'] = code_parsed[0]
+
+        # Insert code reference
+        code_parts = map(int, r['original_code'].split('.'))
+        len_cp = len(code_parts)
+
+        for i in range(len_cp):
+            code  = '.'.join(map(str, code_parts[:len_cp - i]))
+            if not cache.has_key(code):
+                code_result = db.session.query(RevenueCode.id).filter(RevenueCode.code == code).all()
+                if code_result:
+                    cache[code] = code_result[0][0]
+                    r['code_id'] = code_result[0][0]
+                    break
+            else:
+                r['code_id'] = cache[code]
+                break
+        else:
+            r['code_id'] = None
 
         if len(code_parsed) >= 2:
             r['economical_subcategory'] = code_parsed[1]
