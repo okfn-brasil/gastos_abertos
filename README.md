@@ -50,6 +50,6 @@ Start the server:
 
     sqlalchemy.exc.OperationalError: (OperationalError) too many SQL variables u'INSERT INTO revenue (original_code, code_id, description, date, monthly_predicted, monthly_outcome, economical_category, economical_subcategory, source, rubric, paragraph, subparagraph)
 
-Seems to be an (sqlite limitation)[https://stackoverflow.com/questions/7106016/too-many-sql-variables-error-in-django-witih-sqlite3].
-Use `fab importadata:local:80`.
+Seems to be an [sqlite limitation](https://stackoverflow.com/questions/7106016/too-many-sql-variables-error-in-django-witih-sqlite3).
+Use `fab importadata:local,80`.
 
