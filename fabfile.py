@@ -4,8 +4,12 @@
 
 from fabric.api import *
 from fabric.network import ssh
+from flask.ext.script import Manager
 
 from gastosabertos.extensions import db
+from gastosabertos import create_app
+
+app = create_app()
 
 project = "gastosabertos"
 
@@ -53,8 +57,9 @@ def initdb():
     Init or reset database
     """
 
-    db.drop_all()
-    db.create_all()
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
 
 
 def importdata(place="local", lines_per_insert=100):
