@@ -11,6 +11,7 @@ env.user = 'gastosabertos'
 env.hosts = ['gastosabertos.org']
 #env.key_filename = '~/.ssh/ga_id_rsa'
 
+
 def reset():
     """
     Reset local debug env.
@@ -31,6 +32,7 @@ def setup():
     local("python setup.py install")
     reset()
 
+
 def deploy():
     """
     Deploy project to Gastos Abertos server
@@ -42,6 +44,17 @@ def deploy():
         with prefix("source /home/gastosabertos/.virtualenvs/ga/bin/activate"):
             run("python setup.py install")
         run("touch wsgi.py")
+
+
+def importdata(lines_per_insert=100):
+    """
+    Import data to the local DB
+    """
+
+    local("python utils/import_revenue_codes.py")
+    local("python utils/import_revenue.py data/receitas_min.csv %s"
+          % lines_per_insert)
+
 
 def d():
     """
