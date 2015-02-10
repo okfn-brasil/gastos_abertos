@@ -5,6 +5,8 @@
 from fabric.api import *
 from fabric.network import ssh
 
+from gastosabertos.extensions import db
+
 project = "gastosabertos"
 
 env.user = 'gastosabertos'
@@ -44,6 +46,15 @@ def deploy():
         with prefix("source /home/gastosabertos/.virtualenvs/ga/bin/activate"):
             run("python setup.py install")
         run("touch wsgi.py")
+
+
+def initdb():
+    """
+    Init or reset database
+    """
+
+    db.drop_all()
+    db.create_all()
 
 
 def importdata(place="local", lines_per_insert=100):
