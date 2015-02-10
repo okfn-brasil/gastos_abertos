@@ -46,14 +46,22 @@ def deploy():
         run("touch wsgi.py")
 
 
-def importdata(lines_per_insert=100):
+def importdata(place="local", lines_per_insert=100):
     """
     Import data to the local DB
     """
 
-    local("python utils/import_revenue_codes.py")
-    local("python utils/import_revenue.py data/receitas_min.csv %s"
-          % lines_per_insert)
+    import_commands = """
+    python utils/import_revenue_codes.py
+    python utils/import_revenue.py data/receitas_min.csv {lines}
+    """.format(lines=lines_per_insert)
+
+    if place == "remote":
+        run(import_commands)
+    elif place == "local":
+        local(import_commands)
+    else:
+        print("Where to import? 'local' or 'remote'?")
 
 
 def d():
