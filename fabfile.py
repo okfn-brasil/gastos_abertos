@@ -53,8 +53,8 @@ def importdata(place="local", lines_per_insert=100):
 
     import_commands = """
     python utils/import_revenue_codes.py
-    python utils/import_revenue.py data/receitas_min.csv {lines}
-    """.format(lines=lines_per_insert)
+    python utils/import_revenue.py data/receitas_min.csv {lines_per_insert}
+    """.format(lines_per_insert=lines_per_insert)
 
     if place == "remote":
         run(import_commands)
