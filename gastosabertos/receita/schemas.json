@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-04/hyper-schema#",
+    "title": "Gastos Abertos' API",
+    "description": "This is a very nice description of the entire API.",
+
+    "links": [
+        {
+            "rel": "list",
+            "href": "/api/v1/receita/list",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "years": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "minItems": 1,
+                        "maxItems": 2,
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 1
+                    },
+                    "per_page_num": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 100
+                    }
+                }
+                "required": ["years"]
+            }
+        }
+    ]
