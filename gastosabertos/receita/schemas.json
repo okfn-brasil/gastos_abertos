@@ -3,6 +3,38 @@
     "title": "Gastos Abertos' API",
     "description": "This is a very nice description of the entire API.",
 
+    "definitions": {
+        "code": {
+            "description": "Revenue code",
+            "type": "string",
+            "pattern": "^(9\.)?([1-9]\.){4}[0-9]{1,2}\.[0-9]{1,2}$",
+            "example": "1.2.3.4.75.0",
+        },
+        "date": {
+            "description": "Date (???)",
+            "type": "string",
+            "format": "date-time",
+            "example": "2010-08-02",
+        }
+        "description": {
+            "description": "Description of the revenue",
+            "type": "string"
+        }
+        "id": {
+            "description": "ID of the revenue",
+            "type": "integer"
+        },
+        "monthly_outcome": {
+            "description": "Revenue in a month",
+            "type": "float"
+        },
+        "monthly_predicted": {
+            "description": "Revenue predicted for a month",
+            "type": "float"
+        },
+ 
+    }
+
     "links": [
         {
             "rel": "list",
@@ -21,7 +53,7 @@
                     "page": {
                         "type": "integer",
                         "minimum": 0,
-                        "default": 1
+                        "default": 0
                     },
                     "per_page_num": {
                         "type": "integer",
@@ -30,6 +62,34 @@
                     }
                 }
                 "required": ["years"]
+            }
+            "targetSchema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "description": "Revenue list",
+                    "properties": {
+                        "code": {
+                            "$ref": "#/definitions/code"
+                        },
+                        "date": {
+                            "$ref": "#/definitions/date"
+                        },
+                        "description": {
+                            "$ref": "#/definitions/description"
+                        },
+                        "id": {
+                            "$ref": "#/definitions/id"
+                        },
+                        "monthly_outcome": {
+                            "$ref": "#/definitions/monthly_outcome"
+                        },
+                        "monthly_predicted": {
+                            "$ref": "#/definitions/monthly_predicted"
+                        },
+                    }
+                }
+                
             }
         }
     ]
