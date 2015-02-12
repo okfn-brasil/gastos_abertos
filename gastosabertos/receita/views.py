@@ -36,7 +36,7 @@ revenue_list_parser.add_argument('years', type=int, action='append')
 revenue_fields = { 'id': fields.Integer()
                  , 'date': Date
                  , 'description': fields.String()
-                 , 'code': fields.String()
+                 , 'code': fields.String(attribute='original_code')
                  , 'monthly_predicted': fields.Float()
                  , 'monthly_outcome': fields.Float() }
 
