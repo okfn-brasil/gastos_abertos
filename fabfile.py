@@ -43,11 +43,10 @@ def reset():
     Reset local debug env.
     """
 
-    command = """
+    env.run_in("""
     rm -rf /tmp/instance
     mkdir /tmp/instance
-    """
-    env.run_in(command)
+    """)
 
 
 @task
@@ -69,12 +68,11 @@ def deploy():
     Deploy project to Gastos Abertos server
     """
 
-    command = """
+    env.run_in("""
     git pull
     python setup.py install
     touch wsgi.py
-    """
-    env.run_in(command, inside_env=True)
+    """, inside_env=True)
 
 
 @task
@@ -83,8 +81,7 @@ def initdb():
     Init or reset database
     """
 
-    command = "python manage.py initdb"
-    env.run_in(command, inside_env=True)
+    env.run_in("python manage.py initdb", inside_env=True)
 
 
 @task
@@ -93,11 +90,10 @@ def importdata(lines_per_insert=100):
     Import data to the local DB
     """
 
-    command = """
+    env.run_in("""
     python utils/import_revenue_codes.py
     python utils/import_revenue.py data/receitas_min.csv {lines_per_insert}
-    """.format(lines_per_insert=lines_per_insert)
-    env.run_in(command, inside_env=True)
+    """.format(lines_per_insert=lines_per_insert), inside_env=True)
 
 
 @task
