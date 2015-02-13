@@ -36,13 +36,12 @@ class RevenueCode(db.Model):
 
     @staticmethod
     def format_code(code):
-        # return '.'.join([str(int(i)) for i in code.split('.')])
-        a, b, c = [str(int(i)) for i in code.split('.')]
-        a = '.'.join(a)
-        if int(c):
-            formated = '.'.join([a, b, c])
-        elif int(b):
-            formated = '.'.join([a, b])
+        ns = [str(int(i)) for i in code.split('.')]
+        ns[0] = '.'.join(ns[0])
+        if len(ns) > 2 and int(ns[2]):
+            formated = '.'.join([ns[0], ns[1], ns[2]])
+        elif len(ns) > 1 and int(ns[1]):
+            formated = '.'.join([ns[0], ns[1]])
         else:
-            formated = a.replace('0', '').strip('.')
+            formated = ns[0].replace('0', '').strip('.')
         return formated

@@ -47,13 +47,19 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
 
     cache = {}
     to_insert = []
+    total_lines = len(data)
+    current_line = 0.0
+   
     for row_i, row in data.iterrows():
-    #    r = Revenue()
+        current_line += 1
+
         r = {}
 
         if len(to_insert) == lines_per_insert:
-           insert_rows(to_insert)
-           to_insert = []
+            insert_rows(to_insert)
+            to_insert = []
+            # Progress counter
+            print(str(int(current_line/total_lines*100))+'%')
 
         r['original_code'] = row['codigo']
         r['description'] = unicode(row['descricao'])

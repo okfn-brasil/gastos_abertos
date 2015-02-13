@@ -4,7 +4,7 @@
 DB.
 
 Usage:
-    ./import_revenue_code TXT_FILE
+    ./import_revenue_code [TXT_FILE]
     ./import_revenue_code (-h | --help)
 
 Options:
@@ -36,8 +36,8 @@ def get_codes(file_in):
                 code = RevenueCode.format_code(matched.group("code"))
                 if code not in codes:
                     codes[code] = matched.group("descr").strip()
-            else:
-                print("Rejected line: ", line)
+            # else:
+            #     print("Rejected line: ", line)
     return codes
 
 
@@ -48,7 +48,18 @@ def insert_codes(codes):
     db.session.execute(ins)
     db.session.commit()
 
+
+def import_codes(txt_file='../gastos_abertos_dados/doc/Codificacao_de_Receitas_2013.txt'):
+    print("Importing Revenue Codes from: " + txt_file)
+    codes = get_codes(txt_file)
+    insert_codes(codes)
+    print("Done.")
+
+
 if __name__ == '__main__':
     arguments = docopt(__doc__)
-    codes = get_codes(arguments['TXT_FILE'])
-    insert_codes(codes)
+    txt_file = arguments['TXT_FILE']
+    if txt_file:
+        import_codes(txt_file)
+    else:
+        import_codes()

@@ -16,18 +16,21 @@ def run():
 
     app.run()
 
+
 @manager.command
 def test():
     """Run tests."""
 
     return
 
+
 @manager.command
 def initdb():
-    """ Init or reset database"""
+    """Init or reset database"""
 
     db.drop_all()
     db.create_all()
+
 
 if __name__ == "__main__":
     manager.run()
