@@ -34,7 +34,7 @@ revenue_list_parser.add_argument('years', type=int, action='append')
 
 # Fields for RevenueAPI data marshal
 revenue_fields = { 'id': fields.Integer()
-                 , 'date': Date
+                 , 'date': fields.DateTime(dt_format='iso8601')
                  , 'description': fields.String()
                  , 'code': fields.String(attribute='original_code')
                  , 'monthly_predicted': fields.Float()
