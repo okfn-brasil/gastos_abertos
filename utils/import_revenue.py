@@ -23,24 +23,32 @@ db.app = app
 
 from gastosabertos.receita.models import Revenue, RevenueCode
 
+
 def parse_money(money_string):
     if money_string[0] == '-':
         return -float(money_string[3:].replace('.', '').replace(',', '.'))
     else:
         return float(money_string[3:].replace('.', '').replace(',', '.'))
 
+
 def parse_date(date_string):
     year_month = datetime.strptime(date_string, '%Y-%m')
-    date = year_month + timedelta(days = calendar.monthrange(year_month.year, year_month.month)[1] - 1)
+    date = year_month + timedelta(
+        days=calendar.monthrange(
+            year_month.year, year_month.month
+        )[1] - 1)
     return date
+
 
 def parse_code(code_string):
     return [int(i) for i in code_string.split('.')]
+
 
 def insert_rows(rows_data):
     ins = insert(Revenue.__table__, rows_data)
     db.session.execute(ins)
     db.session.commit()
+
 
 def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
     data = pd.read_csv(csv_file, encoding='utf8')
@@ -49,7 +57,7 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
     to_insert = []
     total_lines = len(data)
     current_line = 0.0
-   
+
     for row_i, row in data.iterrows():
         current_line += 1
 
@@ -74,9 +82,10 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
         len_cp = len(code_parts)
 
         for i in range(len_cp):
-            code  = '.'.join(map(str, code_parts[:len_cp - i]))
-            if not cache.has_key(code):
-                code_result = db.session.query(RevenueCode.id).filter(RevenueCode.code == code).all()
+            code = '.'.join(map(str, code_parts[:len_cp - i]))
+            if cache not in code:
+                code_result = db.session.query(RevenueCode.id).filter(
+                    RevenueCode.code == code).all()
                 if code_result:
                     cache[code] = code_result[0][0]
                     r['code_id'] = code_result[0][0]
@@ -117,7 +126,8 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
     if len(to_insert) > 0:
         insert_rows(to_insert)
 
-if  __name__ == '__main__':
+
+if __name__ == '__main__':
     arguments = docopt(__doc__)
     args = {}
     csv_file = arguments['FILE']
