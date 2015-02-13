@@ -22,9 +22,9 @@ receita = Blueprint('receita', __name__,
 # Create the restful API
 receita_api = restful.Api(receita, prefix="/api/v1")
 
-class Date(fields.Raw):
-    def format(self, value):
-        return str(value)
+# class Date(fields.Raw):
+#     def format(self, value):
+#         return str(value)
 
 # Parser for RevenueAPI arguments
 revenue_list_parser = RequestParser()
@@ -244,7 +244,7 @@ class RevenueSeriesApi(restful.Resource):
                 .filter(and_(*args)).group_by(Revenue.date)
             revenues_results = q.all()
 
-            series[code] = {'date': [str(r[0]) for r in revenues_results],
+            series[code] = {'date': [r[0].isoformat() for r in revenues_results],
                             'predicted': [str(r[1]) for r in revenues_results],
                             'outcome': [str(r[2]) for r in revenues_results]}
 
