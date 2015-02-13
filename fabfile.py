@@ -7,29 +7,38 @@ from fabric.network import ssh
 from flask.ext.script import Manager
 
 project = "gastosabertos"
-project_dir = '/home/gastosabertos/gastos_abertos'
+
+remote_project_dir = '/home/gastosabertos/gastos_abertos'
+remote_prefix = "source /home/gastosabertos/.virtualenvs/ga/bin/activate"
 
 env.user = 'gastosabertos'
 env.hosts = ['gastosabertos.org']
 # env.key_filename = '~/.ssh/ga_id_rsa'
 
+env.place = "remote"
 
-def smart_run(command, place, inside_env=True):
-    if place == "local":
+
+def smart_run(command, inside_env=False):
+    if env.place == "local":
         local(command)
-    elif place == "remote":
+    elif env.place == "remote":
         if inside_env:
-            with cd(project_dir):
-                with prefix(
-                        "source /home/gastosabertos/.virtualenvs/ga/bin/activate"):
+            with cd(remote_project_dir):
+                with prefix(remote_prefix):
                     run(command)
         else:
             run(command)
-    else:
-        print("Where to import? 'local' or 'remote'?")
+
+env.run_in = smart_run
 
 
-def reset(place="local"):
+@task
+def run_local():
+    env.place = "local"
+
+
+@task
+def reset():
     """
     Reset local debug env.
     """
@@ -38,43 +47,48 @@ def reset(place="local"):
     rm -rf /tmp/instance
     mkdir /tmp/instance
     """
-    smart_run(command, place)
+    env.run_in(command)
 
 
+@task
 def setup():
     """
     Setup virtual env.
     """
 
-    local("virtualenv env")
+    env.run_in("virtualenv env")
     activate_this = "env/bin/activate_this.py"
     execfile(activate_this, dict(__file__=activate_this))
-    local("python setup.py install")
+    env.run_in("python setup.py install")
     reset()
 
 
+@task
 def deploy():
     """
     Deploy project to Gastos Abertos server
     """
 
-    with cd(project_dir):
-        run("git pull")
-        with prefix("source /home/gastosabertos/.virtualenvs/ga/bin/activate"):
-            run("python setup.py install")
-        run("touch wsgi.py")
+    command = """
+    git pull
+    python setup.py install
+    touch wsgi.py
+    """
+    env.run_in(command, inside_env=True)
 
 
-def initdb(place="local"):
+@task
+def initdb():
     """
     Init or reset database
     """
 
     command = "python manage.py initdb"
-    smart_run(command, place)
+    env.run_in(command, inside_env=True)
 
 
-def importdata(place="local", lines_per_insert=100):
+@task
+def importdata(lines_per_insert=100):
     """
     Import data to the local DB
     """
@@ -83,9 +97,10 @@ def importdata(place="local", lines_per_insert=100):
     python utils/import_revenue_codes.py
     python utils/import_revenue.py data/receitas_min.csv {lines_per_insert}
     """.format(lines_per_insert=lines_per_insert)
-    smart_run(command, place)
+    env.run_in(command, inside_env=True)
 
 
+@task
 def d():
     """
     Debug.
@@ -95,9 +110,10 @@ def d():
     local("python manage.py run")
 
 
+@task
 def babel():
     """
     Babel compile.
     """
 
-    local("python setup.py compile_catalog --directory `find -name translations` --locale zh -f")
+    env.run_in("python setup.py compile_catalog --directory `find -name translations` -f")
