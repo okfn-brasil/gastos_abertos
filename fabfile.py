@@ -6,25 +6,39 @@ from fabric.api import *
 from fabric.network import ssh
 from flask.ext.script import Manager
 
-from gastosabertos.extensions import db
-from gastosabertos import create_app
-
-app = create_app()
-
 project = "gastosabertos"
+project_dir = '/home/gastosabertos/gastos_abertos'
 
 env.user = 'gastosabertos'
 env.hosts = ['gastosabertos.org']
-#env.key_filename = '~/.ssh/ga_id_rsa'
+# env.key_filename = '~/.ssh/ga_id_rsa'
 
 
-def reset():
+def smart_run(command, place, inside_env=True):
+    if place == "local":
+        local(command)
+    elif place == "remote":
+        if inside_env:
+            with cd(project_dir):
+                with prefix(
+                        "source /home/gastosabertos/.virtualenvs/ga/bin/activate"):
+                    run(command)
+        else:
+            run(command)
+    else:
+        print("Where to import? 'local' or 'remote'?")
+
+
+def reset(place="local"):
     """
     Reset local debug env.
     """
 
-    local("rm -rf /tmp/instance")
-    local("mkdir /tmp/instance")
+    command = """
+    rm -rf /tmp/instance
+    mkdir /tmp/instance
+    """
+    smart_run(command, place)
 
 
 def setup():
@@ -44,7 +58,6 @@ def deploy():
     Deploy project to Gastos Abertos server
     """
 
-    project_dir = '/home/gastosabertos/gastos_abertos'
     with cd(project_dir):
         run("git pull")
         with prefix("source /home/gastosabertos/.virtualenvs/ga/bin/activate"):
@@ -52,14 +65,13 @@ def deploy():
         run("touch wsgi.py")
 
 
-def initdb():
+def initdb(place="local"):
     """
     Init or reset database
     """
 
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
+    command = "python manage.py initdb"
+    smart_run(command, place)
 
 
 def importdata(place="local", lines_per_insert=100):
@@ -67,17 +79,11 @@ def importdata(place="local", lines_per_insert=100):
     Import data to the local DB
     """
 
-    import_commands = """
+    command = """
     python utils/import_revenue_codes.py
     python utils/import_revenue.py data/receitas_min.csv {lines_per_insert}
     """.format(lines_per_insert=lines_per_insert)
-
-    if place == "remote":
-        run(import_commands)
-    elif place == "local":
-        local(import_commands)
-    else:
-        print("Where to import? 'local' or 'remote'?")
+    smart_run(command, place)
 
 
 def d():
