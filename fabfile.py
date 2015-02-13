@@ -6,22 +6,36 @@ from fabric.api import *
 from fabric.network import ssh
 from flask.ext.script import Manager
 
-from gastosabertos.extensions import db
-from gastosabertos import create_app
-
-app = create_app()
-
 project = "gastosabertos"
+
+remote_project_dir = '/home/gastosabertos/gastos_abertos'
+remote_prefix = "source /home/gastosabertos/.virtualenvs/ga/bin/activate"
 
 env.user = 'gastosabertos'
 env.hosts = ['gastosabertos.org']
-#env.key_filename = '~/.ssh/ga_id_rsa'
+# env.key_filename = '~/.ssh/ga_id_rsa'
 
-env.run_in = run
+env.place = "remote"
+
+
+def smart_run(command, inside_env=False):
+    if env.place == "local":
+        local(command)
+    elif env.place == "remote":
+        if inside_env:
+            with cd(remote_project_dir):
+                with prefix(remote_prefix):
+                    run(command)
+        else:
+            run(command)
+
+env.run_in = smart_run
+
 
 @task
 def run_local():
-    env.run_in = local
+    env.place = "local"
+
 
 @task
 def reset():
@@ -29,8 +43,12 @@ def reset():
     Reset local debug env.
     """
 
-    env.run_in("rm -rf /tmp/instance")
-    env.run_in("mkdir /tmp/instance")
+    command = """
+    rm -rf /tmp/instance
+    mkdir /tmp/instance
+    """
+    env.run_in(command)
+
 
 @task
 def setup():
@@ -44,18 +62,20 @@ def setup():
     env.run_in("python setup.py install")
     reset()
 
+
 @task
 def deploy():
     """
     Deploy project to Gastos Abertos server
     """
 
-    project_dir = '/home/gastosabertos/gastos_abertos'
-    with cd(project_dir):
-        run("git pull")
-        with prefix("source /home/gastosabertos/.virtualenvs/ga/bin/activate"):
-            run("python setup.py install")
-        run("touch wsgi.py")
+    command = """
+    git pull
+    python setup.py install
+    touch wsgi.py
+    """
+    env.run_in(command, inside_env=True)
+
 
 @task
 def initdb():
@@ -63,9 +83,9 @@ def initdb():
     Init or reset database
     """
 
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
+    command = "python manage.py initdb"
+    env.run_in(command, inside_env=True)
+
 
 @task
 def importdata(lines_per_insert=100):
@@ -73,12 +93,11 @@ def importdata(lines_per_insert=100):
     Import data to the local DB
     """
 
-    import_commands = """
+    command = """
     python utils/import_revenue_codes.py
     python utils/import_revenue.py data/receitas_min.csv {lines_per_insert}
     """.format(lines_per_insert=lines_per_insert)
-
-    env.run_in(import_commands)
+    env.run_in(command, inside_env=True)
 
 
 @task
@@ -89,6 +108,7 @@ def d():
 
     reset()
     local("python manage.py run")
+
 
 @task
 def babel():
