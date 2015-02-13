@@ -14,7 +14,7 @@ class Revenue(db.Model):
     code = db.relationship('RevenueCode', backref='revenues')
     code_id = Column(db.Integer, db.ForeignKey('revenue_code.id'), nullable=True)
     description = Column(db.Text(), nullable=False)
-    date = Column(db.Date())
+    date = Column(db.DateTime())
     monthly_predicted = Column(db.DECIMAL(19, 2))
     monthly_outcome = Column(db.DECIMAL(19, 2))
     economical_category = Column(db.Integer)
