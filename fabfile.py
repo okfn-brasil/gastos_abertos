@@ -17,28 +17,34 @@ env.user = 'gastosabertos'
 env.hosts = ['gastosabertos.org']
 #env.key_filename = '~/.ssh/ga_id_rsa'
 
+env.run_in = run
 
+@task
+def run_local():
+    env.run_in = local
+
+@task
 def reset():
     """
     Reset local debug env.
     """
 
-    local("rm -rf /tmp/instance")
-    local("mkdir /tmp/instance")
+    env.run_in("rm -rf /tmp/instance")
+    env.run_in("mkdir /tmp/instance")
 
-
+@task
 def setup():
     """
     Setup virtual env.
     """
 
-    local("virtualenv env")
+    env.run_in("virtualenv env")
     activate_this = "env/bin/activate_this.py"
     execfile(activate_this, dict(__file__=activate_this))
-    local("python setup.py install")
+    env.run_in("python setup.py install")
     reset()
 
-
+@task
 def deploy():
     """
     Deploy project to Gastos Abertos server
@@ -51,7 +57,7 @@ def deploy():
             run("python setup.py install")
         run("touch wsgi.py")
 
-
+@task
 def initdb():
     """
     Init or reset database
@@ -61,8 +67,8 @@ def initdb():
         db.drop_all()
         db.create_all()
 
-
-def importdata(place="local", lines_per_insert=100):
+@task
+def importdata(lines_per_insert=100):
     """
     Import data to the local DB
     """
@@ -72,14 +78,10 @@ def importdata(place="local", lines_per_insert=100):
     python utils/import_revenue.py data/receitas_min.csv {lines_per_insert}
     """.format(lines_per_insert=lines_per_insert)
 
-    if place == "remote":
-        run(import_commands)
-    elif place == "local":
-        local(import_commands)
-    else:
-        print("Where to import? 'local' or 'remote'?")
+    env.run_in(import_commands)
 
 
+@task
 def d():
     """
     Debug.
@@ -88,10 +90,10 @@ def d():
     reset()
     local("python manage.py run")
 
-
+@task
 def babel():
     """
     Babel compile.
     """
 
-    local("python setup.py compile_catalog --directory `find -name translations` --locale zh -f")
+    env.run_in("python setup.py compile_catalog --directory `find -name translations` -f")
