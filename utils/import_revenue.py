@@ -83,7 +83,7 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
 
         for i in range(len_cp):
             code = '.'.join(map(str, code_parts[:len_cp - i]))
-            if cache not in code:
+            if code not in cache:
                 code_result = db.session.query(RevenueCode.id).filter(
                     RevenueCode.code == code).all()
                 if code_result:
