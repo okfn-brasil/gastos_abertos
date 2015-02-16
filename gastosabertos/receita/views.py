@@ -170,7 +170,6 @@ class RevenueTotalApi(restful.Resource):
         drilldown = args['drilldown']
 
         total = {'name': 'Total Outcome',
-                 'colorByPoint': 'true',
                  'data': []}
 
         for code in codes:
@@ -183,15 +182,15 @@ class RevenueTotalApi(restful.Resource):
             for year in years:
                 args += [extract('year', Revenue.date) == year]
 
-            q = db.session.query(Revenue.code_id,
-                                 RevenueCode.description,
-                                 Revenue.date,
-                                 func.sum(Revenue.monthly_outcome).label('total_outcome'))\
+            levels = [revenue_levels[l] for l in range(len(code_levels)+1)]
+            levels += [Revenue.description, func.sum(Revenue.monthly_outcome).label('total_outcome')]
+            q = db.session.query(*levels)\
                     .join(RevenueCode)\
                     .filter(and_(*args))\
 
             if drilldown and drilldown == 'true':
-                q = q.group_by(Revenue.code_id)
+                q = q.group_by(revenue_levels[len(code_levels)])
+                #q = q.group_by(Revenue.code_id)
             else:
                 revenue_name_query = db.session.query(RevenueCode.description)\
                                         .filter(RevenueCode.code == code).one()
@@ -201,11 +200,20 @@ class RevenueTotalApi(restful.Resource):
             revenues_results = q.all()
 
             for r in revenues_results:
-                if drilldown and drilldown == 'true':
-                    revenue_name = unicode(r[1])
+#                if drilldown and drilldown == 'true':
+#                    revenue_name = unicode(r[1])
+                code = '.'.join([str(c) for c in r[:-2]])
 
-                total['data'] += [{'name': revenue_name,
-                                   'y': float(str(r[3]))
+                try:
+                    revenue_name_query = db.session.query(RevenueCode.description)\
+                                            .filter(RevenueCode.code == code).one()
+                    revenue_name = revenue_name_query[0]
+                except:
+                    revenue_name = r[-2]
+
+                total['data'] += [{'code': '{}.{}'.format(''.join([str(c) for c in r[:3]]), '.'.join([str(c) for c in r[3:-2]])),
+                                   'name': revenue_name,
+                                   'value': float(str(r[-1]))
                                     }]
 
         return total
