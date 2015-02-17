@@ -8,6 +8,7 @@ from datetime import datetime
 from flask import (Blueprint, render_template)
 from flask.ext import restful
 from flask.ext.restful import fields
+from flask.ext.restful.utils import cors
 from flask.ext.restful.reqparse import RequestParser
 
 from .models import Revenue, RevenueCode
@@ -21,6 +22,7 @@ receita = Blueprint('receita', __name__,
 
 # Create the restful API
 receita_api = restful.Api(receita, prefix="/api/v1")
+receita_api.decorators=[cors.crossdomain(origin='*')]
 
 # class Date(fields.Raw):
 #     def format(self, value):
@@ -173,24 +175,25 @@ class RevenueTotalApi(restful.Resource):
                  'data': []}
 
         for code in codes:
-            try:
-                formated_code = RevenueCode.format_code(code)
-            except:
-                formated_code = code
-            code_levels = formated_code.split('.')
+            #try:
+            #    formated_code = RevenueCode.format_code(code)
+            #except:
+            #    formated_code = code
+
+            code_levels = code.split('.')
             args = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
             for year in years:
                 args += [extract('year', Revenue.date) == year]
 
-            levels = [revenue_levels[l] for l in range(len(code_levels)+1)]
+            levels = [revenue_levels[l] for l in range(len(code_levels) + 1)]
             levels += [Revenue.description, func.sum(Revenue.monthly_outcome).label('total_outcome')]
+
             q = db.session.query(*levels)\
                     .join(RevenueCode)\
                     .filter(and_(*args))\
 
             if drilldown and drilldown == 'true':
                 q = q.group_by(revenue_levels[len(code_levels)])
-                #q = q.group_by(Revenue.code_id)
             else:
                 revenue_name_query = db.session.query(RevenueCode.description)\
                                         .filter(RevenueCode.code == code).one()
@@ -200,24 +203,24 @@ class RevenueTotalApi(restful.Resource):
             revenues_results = q.all()
 
             for r in revenues_results:
-#                if drilldown and drilldown == 'true':
-#                    revenue_name = unicode(r[1])
-                code = '.'.join([str(c) for c in r[:-2]])
+                if drilldown and drilldown == 'true':
+                    revenue_name = unicode(r[1])
+                    #code = '.'.join([str(c) for c in r[:-2]])
+                    code = '.'.join([str(c) for c in r[:len(code_levels)+1]])
 
-                try:
-                    revenue_name_query = db.session.query(RevenueCode.description)\
-                                            .filter(RevenueCode.code == code).one()
-                    revenue_name = revenue_name_query[0]
-                except:
-                    revenue_name = r[-2]
+                    try:
+                        revenue_name_query = db.session.query(RevenueCode.description)\
+                                                .filter(RevenueCode.code == code).one()
+                        revenue_name = revenue_name_query[0]
+                    except:
+                        revenue_name = r[-2]
 
-                total['data'] += [{'code': '{}.{}'.format(''.join([str(c) for c in r[:3]]), '.'.join([str(c) for c in r[3:-2]])),
+                total['data'] += [{'code': code,
                                    'name': revenue_name,
                                    'value': float(str(r[-1]))
                                     }]
 
         return total
-
 
 # Parser for RevenueCodeAPI arguments
 revenueseries_code_parser = RequestParser()
