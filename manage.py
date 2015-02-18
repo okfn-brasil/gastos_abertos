@@ -6,21 +6,18 @@ from gastosabertos.extensions import db
 from gastosabertos import create_app
 
 
-app = create_app()
-manager = Manager(app)
-
+manager = Manager(create_app)
+manager.add_option('-i', '--inst', dest='instance_folder', required=False)
 
 @manager.command
 def run():
     """Run in local machine."""
-
-    app.run()
+    manager.app.run()
 
 
 @manager.command
 def test():
     """Run tests."""
-
     return
 
 
