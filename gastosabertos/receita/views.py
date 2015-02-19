@@ -33,6 +33,7 @@ revenue_list_parser = RequestParser()
 revenue_list_parser.add_argument('page', type=int, default=0)
 revenue_list_parser.add_argument('per_page_num', type=int, default=100)
 revenue_list_parser.add_argument('years', type=int, action='append')
+revenue_list_parser.add_argument('code')
 
 # Fields for RevenueAPI data marshal
 revenue_fields = { 'id': fields.Integer()
@@ -52,8 +53,15 @@ class RevenueApi(restful.Resource):
         per_page_num = args['per_page_num']
         years = args['years']
 
-        # Create the query
+
         revenue_data = db.session.query(Revenue)
+
+        # Get only revenues below level 'code'
+        if args['code']:
+            code = args['code']
+            code_levels = code.split('.')
+            query_levels = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
+            revenue_data = revenue_data .filter(and_(*query_levels))
 
         if years:
             # Filter years
