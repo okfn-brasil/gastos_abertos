@@ -25,7 +25,6 @@ def create_app(config=None, app_name=None, instance_folder=None, blueprints=None
     if blueprints is None:
         blueprints = DEFAULT_BLUEPRINTS
     if instance_folder is None:
-	print instance_folder,  "ALGO"
         instance_folder = INSTANCE_FOLDER_PATH
 
     app = Flask(__name__, instance_path=instance_folder, instance_relative_config=True)
