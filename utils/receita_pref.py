@@ -28,7 +28,7 @@ class CodeTable(object):
         self.df.to_csv(self.filename)
 
     def __getitem__(self, cod):
-        return self.df.at[cod,'descricao']
+        return self.df.at[ cod,'descricao']
 
     def __setitem__(self, cod, descr):
         current = ''
