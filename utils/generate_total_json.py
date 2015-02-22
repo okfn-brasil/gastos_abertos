@@ -1,26 +1,25 @@
 # -*- coding: utf-8 -*-
 
-''' Read a TXT, extract revenue codes and descriptions, and insert them in the
-DB.
+''' Generate a JSON by year with totalizations for each code.
 
-Usage:
-    ./import_revenue_code [TXT_FILE]
-    ./import_revenue_code (-h | --help)
+Usage: generate_total_json [options] [<year>...]
 
 Options:
-    -h --help   Show this message.
+-h, --help                        Show this message.
+-o, --outfolder <outfolder>       Folder where to place files.
+                                  Maybe relative.
+                                  [default: current folder]
 '''
-import re
+import os
+import json
 
 from docopt import docopt
-import codecs
 
 from sqlalchemy import func, extract
-from sqlalchemy.sql.expression import insert
 
 from gastosabertos import create_app
 from gastosabertos.extensions import db
-from gastosabertos.receita.models import Revenue, RevenueCode
+from gastosabertos.receita.models import Revenue
 
 app = create_app()
 db.app = app
@@ -33,11 +32,6 @@ revenue_levels[3] = Revenue.rubric
 revenue_levels[4] = Revenue.paragraph
 revenue_levels[5] = Revenue.subparagraph
 
-db.session.query(RevenueCode.code).all()
-
-# q = db.session.query(Revenue.economical_category, Revenue.economical_subcategory, Revenue.source, Revenue.rubric, Revenue.paragraph, Revenue.subparagraph, func.sum(Revenue.monthly_outcome)) \
-# .filter(extract('year', Revenue.date) == 2013) \
-# .group_by(Revenue.economical_category, Revenue.economical_subcategory, Revenue.source, Revenue.rubric, Revenue.paragraph, Revenue.subparagraph)
 
 def calculate_year(year):
     codes_values = {}
@@ -52,72 +46,31 @@ def calculate_year(year):
 
         for element in q.all():
             code = element[0:-1]
+            code_str = '.'.join([str(i) for i in code if i])
             value = element[-1]
-            codes_values[code] = value
+            codes_values[code_str] = float(value)
 
     return codes_values
 
 
-def calculate_all():
-    for year in range(2008, 2016):
-        year = str(year)
-        year_data = calculate_year(year)
-        
+def calculate_all(outfolder, years):
+    # if years is an empty list, calculate for all years in the DB
+    if not years:
+        ext = extract('year', Revenue.date)
+        dbyears = db.session.query(ext).group_by(ext).all()
+        # years = range(2008, 2016)
+        years = [str(i[0]) for i in dbyears]
+    for year in years:
+        # year = str(year)
+        filepath = os.path.join(outfolder, year + ".json")
+        with open(filepath, 'w') as outfile:
+            year_data = calculate_year(year)
+            json.dump(year_data, outfile)
 
-        # years = args['years']
-        # drilldown = args['drilldown']
-
-        # total = {'name': 'Total Outcome',
-        #          'data': []}
-
-        # for code in codes:
-        #     #try:
-        #     #    formated_code = RevenueCode.format_code(code)
-        #     #except:
-        #     #    formated_code = code
-
-        #     code_levels = code.split('.')
-        #     args = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
-        #     for year in years:
-        #         args += [extract('year', Revenue.date) == year]
-
-        #     levels = [revenue_levels[l] for l in range(len(code_levels) + 1)]
-        #     levels += [Revenue.description, func.sum(Revenue.monthly_outcome).label('total_outcome')]
-
-        #     q = db.session.query(*levels)\
-        #             .join(RevenueCode)\
-        #             .filter(and_(*args))\
-
-        #     if drilldown and drilldown == 'true':
-        #         q = q.group_by(revenue_levels[len(code_levels)])
-        #     else:
-        #         revenue_name_query = db.session.query(RevenueCode.description)\
-        #                                 .filter(RevenueCode.code == code).one()
-        #         revenue_name = revenue_name_query[0]
-
-        #     q = q.order_by('total_outcome')
-        #     revenues_results = q.all()
-
-        #     for r in revenues_results:
-        #         if drilldown and drilldown == 'true':
-        #             revenue_name = unicode(r[1])
-        #             #code = '.'.join([str(c) for c in r[:-2]])
-        #             code = '.'.join([str(c) for c in r[:len(code_levels)+1]])
-
-        #             try:
-        #                 revenue_name_query = db.session.query(RevenueCode.description)\
-        #                                         .filter(RevenueCode.code == code).one()
-        #                 revenue_name = revenue_name_query[0]
-        #             except:
-        #                 revenue_name = r[-2]
-
-        #         total['data'] += [{'code': code,
-        #                            'name': revenue_name,
-        #                            'value': float(str(r[-1]))
-        #                             }]
-
-        # return total
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
-    calculate_all()
+    outfolder = arguments['--outfolder']
+    if outfolder == "current folder":
+        outfolder = os.getcwd()
+    calculate_all(outfolder, arguments['<year>'])
