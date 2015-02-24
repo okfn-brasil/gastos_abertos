@@ -15,11 +15,12 @@ import json
 
 from docopt import docopt
 
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, and_
+from sqlalchemy.orm.exc import NoResultFound
 
 from gastosabertos import create_app
 from gastosabertos.extensions import db
-from gastosabertos.receita.models import Revenue
+from gastosabertos.receita.models import Revenue, RevenueCode
 
 app = create_app()
 db.app = app
@@ -33,24 +34,78 @@ revenue_levels[4] = Revenue.paragraph
 revenue_levels[5] = Revenue.subparagraph
 
 
+def get_description(code, parent_description):
+    """Searches for the description of the code.
+    If can't find, returns parent_description."""
+    code_str = '.'.join([str(i) for i in code if i])
+    try:
+        description = db.session.query(RevenueCode.description)\
+            .filter(RevenueCode.code == code_str).one()
+    except NoResultFound:
+        if parent_description:
+            description = parent_description
+        else:
+            raise
+    return description
+
+
+def create_treemap(code_levels, year, parent_name):
+    """Calculate a tree below a code"""
+    treemap = {}
+    element_name = get_description(code_levels, parent_name)
+    treemap['name'] = element_name
+    treemap['children'] = []
+
+    args = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
+    args += [extract('year', Revenue.date) == year]
+
+    levels = [revenue_levels[l] for l in range(len(code_levels)+1)]
+    levels += [func.sum(Revenue.monthly_outcome)]
+
+    children = db.session.query(*levels)\
+        .filter(and_(*args))\
+        .group_by(revenue_levels[len(code_levels)])\
+        .all()
+
+    for child in children:
+        child_value = float(child[-1])
+        # Ignore 0 paths
+        if child_value != 0:
+            child_code_levels = child[:len(code_levels)+1]
+
+            is_leaf = len(child_code_levels) == 6 or\
+                (child_code_levels[-1] is None)
+
+            if is_leaf:
+                child_name = get_description(child_code_levels, element_name)
+                leaf = [{'name': child_name, 'value': child_value}]
+                treemap['children'].append(leaf)
+            else:
+                # recursive drilldown
+                child_tree = create_treemap(child_code_levels,
+                                            year, element_name)
+                treemap['children'].append(child_tree)
+
+    return treemap
+
+
 def calculate_year(year):
-    codes_values = {}
-    for i in range(len(revenue_levels)):
-        levels = revenue_levels.values()[0:i+1]
-        args = levels + \
-            [func.sum(Revenue.monthly_outcome).label('total_outcome')]
+    """Calculate the tree for a year"""
 
-        q = db.session.query(*args)\
-            .filter(extract('year', Revenue.date) == year) \
-            .group_by(*levels)
+    # get highest level numbers (ie.: 1, 2 and 9)
+    highest_level = revenue_levels[0]
+    highest_level_numbers = db.session.query(highest_level)\
+        .filter(extract('year', Revenue.date) == year)\
+        .group_by(highest_level).all()
 
-        for element in q.all():
-            code = element[0:-1]
-            code_str = '.'.join([str(i) for i in code if i])
-            value = element[-1]
-            codes_values[code_str] = float(value)
+    treemap = {}
+    treemap['name'] = "Revenue %s" % year
+    treemap['children'] = []
 
-    return codes_values
+    for code in highest_level_numbers:
+        treemap['children'].append(create_treemap(code, year, None))
+
+    return treemap
 
 
 def calculate_all(outfolder, years):
