@@ -53,7 +53,7 @@ def insert_rows(db, rows_data):
     db.session.commit()
 
 
-def insert_all(db, csv_file='data/receitas_min.csv', lines_per_insert=100):
+def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
     data = pd.read_csv(csv_file, encoding='utf8')
 
     cache = {}
@@ -127,7 +127,7 @@ def insert_all(db, csv_file='data/receitas_min.csv', lines_per_insert=100):
         to_insert.append(r)
 
     if len(to_insert) > 0:
-        insert_rows(to_insert)
+        insert_rows(db, to_insert)
 
 
 if __name__ == '__main__':
