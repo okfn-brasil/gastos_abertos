@@ -16,12 +16,15 @@ from sqlalchemy.sql.expression import insert
 from docopt import docopt
 
 from gastosabertos import create_app
-from gastosabertos.extensions import db
-
-app = create_app()
-db.app = app
 
 from gastosabertos.receita.models import Revenue, RevenueCode
+
+
+def get_db():
+    from gastosabertos.extensions import db
+    app = create_app()
+    db.app = app
+    return db
 
 
 def parse_money(money_string):
@@ -44,13 +47,13 @@ def parse_code(code_string):
     return [int(i) for i in code_string.split('.')]
 
 
-def insert_rows(rows_data):
+def insert_rows(db, rows_data):
     ins = insert(Revenue.__table__, rows_data)
     db.session.execute(ins)
     db.session.commit()
 
 
-def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
+def insert_all(db, csv_file='data/receitas_min.csv', lines_per_insert=100):
     data = pd.read_csv(csv_file, encoding='utf8')
 
     cache = {}
@@ -64,7 +67,7 @@ def insert_all(csv_file='../data/receitas_min.csv', lines_per_insert=100):
         r = {}
 
         if len(to_insert) == lines_per_insert:
-            insert_rows(to_insert)
+            insert_rows(db, to_insert)
             to_insert = []
             # Progress counter
             print(str(int(current_line/total_lines*100))+'%')
@@ -136,4 +139,5 @@ if __name__ == '__main__':
     lines_per_insert = arguments['LINES_PER_INSERT']
     if lines_per_insert:
         args['lines_per_insert'] = int(lines_per_insert)
-    insert_all(**args)
+    db = get_db()
+    insert_all(db, **args)

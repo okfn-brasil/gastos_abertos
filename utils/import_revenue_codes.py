@@ -18,11 +18,16 @@ import codecs
 from sqlalchemy.sql.expression import insert
 
 from gastosabertos import create_app
-from gastosabertos.extensions import db
 from gastosabertos.receita.models import RevenueCode
 
-app = create_app()
-db.app = app
+TXT = '../gastos_abertos_dados/doc/Codificacao_de_Receitas_2013.txt'
+
+
+def get_db():
+    from gastosabertos.extensions import db
+    app = create_app()
+    db.app = app
+    return db
 
 
 def get_codes(file_in):
@@ -41,7 +46,7 @@ def get_codes(file_in):
     return codes
 
 
-def insert_codes(codes):
+def insert_codes(db, codes):
     rows = [{"code": code, "description": description}
             for code, description in codes.items()]
     ins = insert(RevenueCode.__table__, rows)
@@ -49,17 +54,18 @@ def insert_codes(codes):
     db.session.commit()
 
 
-def import_codes(txt_file='../gastos_abertos_dados/doc/Codificacao_de_Receitas_2013.txt'):
+def import_codes(db, txt_file=TXT):
     print("Importing Revenue Codes from: " + txt_file)
     codes = get_codes(txt_file)
-    insert_codes(codes)
+    insert_codes(db, codes)
     print("Done.")
 
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
     txt_file = arguments['TXT_FILE']
+    db = get_db()
     if txt_file:
-        import_codes(txt_file)
+        import_codes(db, txt_file)
     else:
-        import_codes()
+        import_codes(db)
