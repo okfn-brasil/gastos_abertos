@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
+import json
 import pandas as pd
 from sqlalchemy import and_, extract, func
 from datetime import datetime
 
-from flask import (Blueprint, render_template)
+from flask import Blueprint, render_template, send_from_directory
 from flask.ext import restful
 from flask.ext.restful import fields
 from flask.ext.restful.utils import cors
@@ -22,7 +23,7 @@ receita = Blueprint('receita', __name__,
 
 # Create the restful API
 receita_api = restful.Api(receita, prefix="/api/v1")
-receita_api.decorators=[cors.crossdomain(origin='*')]
+receita_api.decorators = [cors.crossdomain(origin='*')]
 
 # class Date(fields.Raw):
 #     def format(self, value):
@@ -43,6 +44,7 @@ revenue_fields = { 'id': fields.Integer()
                  , 'monthly_predicted': fields.Float()
                  , 'monthly_outcome': fields.Float() }
 
+
 class RevenueApi(restful.Resource):
 
     @restful.marshal_with(revenue_fields)
@@ -52,7 +54,6 @@ class RevenueApi(restful.Resource):
         page = args['page']
         per_page_num = args['per_page_num']
         years = args['years']
-
 
         revenue_data = db.session.query(Revenue)
 
@@ -132,9 +133,6 @@ class GroupedRevenueApi(restful.Resource):
                                       'total_outcome': str(rev[len(levels) + 1])} for rev in revenue_data.all()]
 
         return revenue_grouped
-
-
-
 
 
 # Parser for RevenueCodeAPI arguments
@@ -270,16 +268,34 @@ class RevenueSeriesApi(restful.Resource):
         return series
 
 
+totaldrilldown_revenue_parser = RequestParser()
+totaldrilldown_revenue_parser.add_argument('year', type=int)
+
+
+class RevenueTotalDrilldown(restful.Resource):
+
+    def get(self):
+        args = totaldrilldown_revenue_parser.parse_args()
+        year = str(args['year'])
+        filepath = os.path.join("data", "total_by_year_by_code", year+'.json')
+        with open(filepath, 'r') as f:
+            # TODO the file is already a JSON, it's dumb to send it this way...
+            data = json.load(f)
+            return data
+
+
 receita_api.add_resource(RevenueApi, '/receita/list')
 receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 receita_api.add_resource(RevenueTotalApi, '/receita/total')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
 receita_api.add_resource(RevenueSeriesApi, '/receita/series')
+receita_api.add_resource(RevenueTotalDrilldown, '/receita/totaldrilldown')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
 # df_receita = pd.read_csv(csv_receita, encoding='utf8')
 
 years = range(2008, 2015)
+
 
 def get_year_data(year):
     # TODO correct real year, an not month 01
@@ -301,6 +317,6 @@ def receita_table(year, page=0):
         years=years)
 
 
-@receita.route('/sankey/<path:filename>')
-def sankey(filename):
-    return send_from_directory('sankey', filename)
+# @receita.route('/sankey/<path:filename>')
+# def sankey(filename):
+#     return send_from_directory('sankey', filename)
