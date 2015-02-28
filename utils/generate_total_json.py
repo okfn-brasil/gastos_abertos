@@ -33,8 +33,6 @@ revenue_levels[3] = Revenue.rubric
 revenue_levels[4] = Revenue.paragraph
 revenue_levels[5] = Revenue.subparagraph
 
-FAMILY = []
-
 
 def get_code_str(code):
     return '.'.join([str(i) for i in code if i])
@@ -50,7 +48,7 @@ def get_description(code, parent_description):
     except NoResultFound:
         if parent_description:
             description = parent_description
-            print(code, description)
+            # print(code, description)
         else:
             raise
     return description
@@ -71,9 +69,9 @@ def create_treemap(code_levels, value, year, parent_name):
     element_map = {}
     element_name = get_description(code_levels, parent_name)
     element_map['name'] = element_name
-    element_map['id'] = get_code_str(code_levels)
+    element_map['code'] = get_code_str(code_levels)
     # element_map['y'] = value
-    element_map['data'] = []
+    element_map['children'] = []
 
     args = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
     args += [extract('year', Revenue.date) == year]
@@ -98,10 +96,11 @@ def create_treemap(code_levels, value, year, parent_name):
             child_name = get_description(child_code_levels, element_name)
             child_map = {
                 'name': child_name,
-                'y': child_value,
-                'drilldown': get_code_str(child_code_levels)
+                'code': get_code_str(child_code_levels),
+                'data': [child_value],
+                # 'drilldown': get_code_str(child_code_levels)
             }
-            element_map['data'].append(child_map)
+            element_map['children'].append(child_map)
 
             is_leaf = len(child_code_levels) == 6 or\
                 (child_code_levels[-1] is None)
@@ -132,8 +131,8 @@ def calculate_year(year):
 
     element_map = {}
     element_map['name'] = "Receita %s" % year
-    element_map['id'] = 'BASE'
-    element_map['data'] = []
+    element_map['code'] = 'BASE'
+    element_map['children'] = []
 
     children_map_list = []
     for code, value in highest_level_numbers:
@@ -145,12 +144,19 @@ def calculate_year(year):
         child_name = get_description(code, None)
         child_map = {
             'name': child_name,
-            'y': value,
-            'drilldown': get_code_str(code)
+            'code': get_code_str(code),
+            'data': [value],
+            # 'drilldown': get_code_str(code)
         }
-        element_map['data'].append(child_map)
+        element_map['children'].append(child_map)
 
-    return [element_map] + children_map_list
+    family = {}
+    for element in [element_map] + children_map_list:
+        try:
+            family[element['code']] = element
+        except:
+            pass
+    return family
 
 
 def calculate_all(outfolder, years):
