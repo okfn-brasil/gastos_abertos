@@ -23,7 +23,7 @@ setup(
         'Flask-Testing',
         'Flask-Restful',
         'fabric',
-	'docopt',
+        'docopt',
         'pandas'
     ],
     classifiers=[
