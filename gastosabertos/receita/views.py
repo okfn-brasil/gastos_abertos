@@ -21,6 +21,7 @@ receita = Blueprint('receita', __name__,
                     static_folder='static',
                     static_url_path='/receita/static')
 
+
 # Create the restful API
 receita_api = restful.Api(receita, prefix="/api/v1")
 receita_api.decorators = [cors.crossdomain(origin='*')]

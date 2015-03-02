@@ -4,6 +4,7 @@ import os
 
 from flask import Flask, request, render_template
 from flask.ext.babel import Babel
+from flask.ext.restful.utils import cors
 
 from .config import DefaultConfig, INSTANCE_FOLDER_PATH
 from .extensions import db
@@ -113,6 +114,11 @@ def configure_hook(app):
     @app.before_request
     def before_request():
         pass
+
+    @app.after_request
+    @cors.crossdomain(origin='*')
+    def after(response):
+        return response
 
 
 def configure_error_handlers(app):
