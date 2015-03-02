@@ -272,16 +272,16 @@ totaldrilldown_revenue_parser = RequestParser()
 totaldrilldown_revenue_parser.add_argument('year', type=int)
 
 
-class RevenueTotalDrilldown(restful.Resource):
+# class RevenueTotalDrilldown(restful.Resource):
 
-    def get(self):
-        args = totaldrilldown_revenue_parser.parse_args()
-        year = str(args['year'])
-        filepath = os.path.join("data", "total_by_year_by_code", year+'.json')
-        with open(filepath, 'r') as f:
-            # TODO the file is already a JSON, it's dumb to send it this way...
-            data = json.load(f)
-            return data
+#     def get(self):
+#         args = totaldrilldown_revenue_parser.parse_args()
+#         year = str(args['year'])
+#         filepath = os.path.join("data", "total_by_year_by_code", year+'.json')
+#         with open(filepath, 'r') as f:
+#             # TODO the file is already a JSON, it's dumb to send it this way...
+#             data = json.load(f)
+#             return data
 
 
 receita_api.add_resource(RevenueApi, '/receita/list')
@@ -289,7 +289,7 @@ receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 receita_api.add_resource(RevenueTotalApi, '/receita/total')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
 receita_api.add_resource(RevenueSeriesApi, '/receita/series')
-receita_api.add_resource(RevenueTotalDrilldown, '/receita/totaldrilldown')
+# receita_api.add_resource(RevenueTotalDrilldown, '/receita/totaldrilldown')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
 # df_receita = pd.read_csv(csv_receita, encoding='utf8')
