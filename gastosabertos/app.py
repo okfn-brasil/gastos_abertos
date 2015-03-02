@@ -49,7 +49,7 @@ def configure_app(app, config=None):
     # Allows setting config from outsite instance folder
     non_instance_config = os.path.join(
         os.path.dirname(app.root_path), 'settings', 'local_settings.py')
-    app.config.from_pyfile(non_instance_config, silent=False)
+    app.config.from_pyfile(non_instance_config, silent=True)
 
     # http://flask.pocoo.org/docs/config/#instance-folders
     app.config.from_pyfile('production.cfg', silent=True)
