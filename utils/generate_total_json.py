@@ -15,7 +15,7 @@ import json
 
 from docopt import docopt
 
-from sqlalchemy import func, extract, and_, orm
+from sqlalchemy import func, extract, and_
 # from sqlalchemy.orm.exc import NoResultFound
 
 from gastosabertos import create_app
@@ -45,7 +45,9 @@ def get_description(code, parent_description):
     try:
         description = db.session.query(RevenueCode.description)\
             .filter(RevenueCode.code == code_str).one()[0]
-    except orm.exc.NoResultFound:
+    # serves was raising 'orm_exc.NoResultFound'
+    # except NoResultFound:
+    except:
         if parent_description:
             description = parent_description
             # print(code, description)
