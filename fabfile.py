@@ -98,13 +98,13 @@ def importdata(lines_per_insert=100):
 
 
 @task
-def generate_jsons():
+def generate_jsons(year=''):
     """
     Generate Jsons for Highcharts
     """
     env.run_in("""
-    python utils/generate_total_json.py -o data/total_by_year_by_code
-    """.format(), inside_env=True)
+    python utils/generate_total_json.py -o data/total_by_year_by_code {year}
+    """.format(year=year), inside_env=True)
 
 
 @task
