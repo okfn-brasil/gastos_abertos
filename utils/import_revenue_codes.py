@@ -20,6 +20,7 @@ from sqlalchemy.sql.expression import insert
 from gastosabertos import create_app
 from gastosabertos.receita.models import RevenueCode
 
+
 TXT = '../gastos_abertos_dados/doc/Codificacao_de_Receitas_2013.txt'
 
 

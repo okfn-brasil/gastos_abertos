@@ -22,7 +22,7 @@ from gastosabertos import create_app
 from gastosabertos.extensions import db
 from gastosabertos.receita.models import Revenue, RevenueCode
 
-app = create_app(instance_folder="/home/andres/manuscritos/gastos-abertos/gastos_abertos/instancia")
+app = create_app()
 db.app = app
 
 revenue_levels = {}

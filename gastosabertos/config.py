@@ -4,7 +4,9 @@ import os
 
 from utils import make_dir
 
+
 INSTANCE_FOLDER_PATH = '/tmp'
+
 
 class BaseConfig(object):
 
