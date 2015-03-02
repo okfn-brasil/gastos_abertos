@@ -32,11 +32,9 @@ Install python's dependencies:
 
     python setup.py install
 
-Prepare DB:
+Prepare DB and other files:
 
-    fab reset
-    fab initdb
-    fab importdata
+    fab reset initdb importdata generate_jsons
 
 Start the server:
 
