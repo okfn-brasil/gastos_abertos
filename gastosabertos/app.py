@@ -17,7 +17,8 @@ DEFAULT_BLUEPRINTS = (
 )
 
 
-def create_app(config=None, app_name=None, instance_folder=None, blueprints=None):
+def create_app(config=None, app_name=None, instance_folder=None,
+               blueprints=None):
     """Create a Flask app."""
 
     if app_name is None:
@@ -27,7 +28,8 @@ def create_app(config=None, app_name=None, instance_folder=None, blueprints=None
     if instance_folder is None:
         instance_folder = INSTANCE_FOLDER_PATH
 
-    app = Flask(__name__, instance_path=instance_folder, instance_relative_config=True)
+    app = Flask(__name__, instance_path=instance_folder,
+                instance_relative_config=True)
     configure_app(app, config)
     configure_hook(app)
     configure_blueprints(app, blueprints)
@@ -44,6 +46,11 @@ def configure_app(app, config=None):
     # http://flask.pocoo.org/docs/api/#configuration
     app.config.from_object(DefaultConfig)
 
+    # Allows setting config from outsite instance folder
+    non_instance_config = os.path.join(
+        os.path.dirname(app.root_path), 'settings', 'local_settings.py')
+    app.config.from_pyfile(non_instance_config, silent=False)
+
     # http://flask.pocoo.org/docs/config/#instance-folders
     app.config.from_pyfile('production.cfg', silent=True)
 
@@ -51,7 +58,7 @@ def configure_app(app, config=None):
         app.config.from_object(config)
 
     # Use instance folder instead of env variables to make deployment easier.
-    #app.config.from_envvar('%s_APP_CONFIG' % DefaultConfig.PROJECT.upper(), silent=True)
+    # app.config.from_envvar('%s_APP_CONFIG' % DefaultConfig.PROJECT.upper(), silent=True)
 
 
 def configure_extensions(app):
