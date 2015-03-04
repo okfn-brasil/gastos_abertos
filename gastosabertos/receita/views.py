@@ -55,12 +55,12 @@ class RevenueApi(restful.Resource):
         page = args['page']
         per_page_num = args['per_page_num']
         years = args['years']
+        code = args['code']
 
         revenue_data = db.session.query(Revenue)
 
         # Get only revenues below level 'code'
-        if args['code']:
-            code = args['code']
+        if code:
             code_levels = code.split('.')
             query_levels = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
             revenue_data = revenue_data .filter(and_(*query_levels))
@@ -76,11 +76,17 @@ class RevenueApi(restful.Resource):
                 year = str(years[0])
                 revenue_data = revenue_data.filter(extract('year', Revenue.date) == year)
 
-        # Limit que number of results per page
-        revenue_data = revenue_data.offset(page*per_page_num)\
-                            .limit(per_page_num)\
+        headers = {
+            # Add 'Access-Control-Expose-Headers' header here is a workaround
+            # until Flask-Restful adds support to it.
+            'Access-Control-Expose-Headers': 'X-Total-Count',
+            'X-Total-Count': revenue_data.count()
+        }
 
-        return revenue_data.all()
+        # Limit que number of results per page
+        revenue_data = revenue_data.offset(page*per_page_num).limit(per_page_num)
+
+        return revenue_data.all(), 200, headers
 
 # Revenues levels Dict for GroupedRevenueApi
 revenue_levels = {}
@@ -124,8 +130,8 @@ class GroupedRevenueApi(restful.Resource):
         for year in years:
             year = str(year)
             if year != 'all':
-                revenue_data = revenue_query_base.filter(extract('year', Revenue.date) == year)\
-                                           .group_by(*levels_columns)
+                revenue_data = (revenue_query_base.filter(extract('year', Revenue.date) == year)
+                                                  .group_by(*levels_columns))
             else:
                 revenue_data = revenue_query_base.group_by(*levels_columns)
 
@@ -195,15 +201,15 @@ class RevenueTotalApi(restful.Resource):
             levels = [revenue_levels[l] for l in range(len(code_levels) + 1)]
             levels += [Revenue.description, func.sum(Revenue.monthly_outcome).label('total_outcome')]
 
-            q = db.session.query(*levels)\
-                    .join(RevenueCode)\
-                    .filter(and_(*args))\
+            q = (db.session.query(*levels)
+                           .join(RevenueCode)
+                           .filter(and_(*args)))
 
             if drilldown and drilldown == 'true':
                 q = q.group_by(revenue_levels[len(code_levels)])
             else:
-                revenue_name_query = db.session.query(RevenueCode.description)\
-                                        .filter(RevenueCode.code == code).one()
+                revenue_name_query = (db.session.query(RevenueCode.description)
+                                        .filter(RevenueCode.code == code).one())
                 revenue_name = revenue_name_query[0]
 
             q = q.order_by('total_outcome')
@@ -216,8 +222,8 @@ class RevenueTotalApi(restful.Resource):
                     code = '.'.join([str(c) for c in r[:len(code_levels)+1]])
 
                     try:
-                        revenue_name_query = db.session.query(RevenueCode.description)\
-                                                .filter(RevenueCode.code == code).one()
+                        revenue_name_query = (db.session.query(RevenueCode.description)
+                                                .filter(RevenueCode.code == code).one())
                         revenue_name = revenue_name_query[0]
                     except:
                         revenue_name = r[-2]
@@ -258,8 +264,8 @@ class RevenueSeriesApi(restful.Resource):
             q = db.session.query(
                 Revenue.date,
                 func.sum(Revenue.monthly_predicted),
-                func.sum(Revenue.monthly_outcome))\
-                .filter(and_(*args)).group_by(Revenue.date)
+                (func.sum(Revenue.monthly_outcome))
+                 .filter(and_(*args)).group_by(Revenue.date))
             revenues_results = q.all()
 
             series[code] = {'date': [r[0].isoformat() for r in revenues_results],
