@@ -30,7 +30,7 @@ class DefaultConfig(BaseConfig):
 
     DEBUG = True
     # Flask-babel: http://pythonhosted.org/Flask-Babel/
-    ACCEPT_LANGUAGES = ['pt-br']
+    ACCEPT_LANGUAGES = ['pt_BR']
     BABEL_DEFAULT_LOCALE = 'en'
 
     # Flask-Sqlalchemy: http://packages.python.org/Flask-SQLAlchemy/config.html
@@ -42,4 +42,3 @@ class DefaultConfig(BaseConfig):
 class TestConfig(BaseConfig):
     TESTING = True
     WTF_CSRF_ENABLED = False
-
