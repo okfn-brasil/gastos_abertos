@@ -22,6 +22,7 @@ setup(
         'Flask-Babel',
         'Flask-Testing',
         'Flask-Restful',
+        'Flask-CORS',
         'fabric',
         'docopt',
         'pandas'
