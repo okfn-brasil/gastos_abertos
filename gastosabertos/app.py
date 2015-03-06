@@ -4,7 +4,8 @@ import os
 
 from flask import Flask, request, render_template
 from flask.ext.babel import Babel
-from flask.ext.restful.utils import cors
+# from flask.ext.restful.utils import cors
+from flask.ext.cors import CORS
 
 from .config import DefaultConfig, INSTANCE_FOLDER_PATH
 from .extensions import db
@@ -37,6 +38,9 @@ def create_app(config=None, app_name=None, instance_folder=None,
     configure_extensions(app)
     configure_logging(app)
     configure_error_handlers(app)
+
+    # Full CORS!
+    cors = CORS(app, resources={r"*": {"origins": "*"}})
 
     return app
 
@@ -115,10 +119,10 @@ def configure_hook(app):
     def before_request():
         pass
 
-    @app.after_request
-    @cors.crossdomain(origin='*')
-    def after(response):
-        return response
+    # @app.after_request
+    # @cors.crossdomain(origin='*')
+    # def after(response):
+    #     return response
 
 
 def configure_error_handlers(app):

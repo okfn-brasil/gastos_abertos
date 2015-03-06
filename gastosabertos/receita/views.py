@@ -9,7 +9,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, send_from_directory
 from flask.ext import restful
 from flask.ext.restful import fields
-from flask.ext.restful.utils import cors
+# from flask.ext.restful.utils import cors
 from flask.ext.restful.reqparse import RequestParser
 
 from .models import Revenue, RevenueCode
@@ -24,7 +24,7 @@ receita = Blueprint('receita', __name__,
 
 # Create the restful API
 receita_api = restful.Api(receita, prefix="/api/v1")
-receita_api.decorators = [cors.crossdomain(origin='*')]
+# receita_api.decorators = [cors.crossdomain(origin='*')]
 
 # class Date(fields.Raw):
 #     def format(self, value):
