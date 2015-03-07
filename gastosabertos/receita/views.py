@@ -275,20 +275,17 @@ class RevenueSeriesApi(restful.Resource):
         return series
 
 
-totaldrilldown_revenue_parser = RequestParser()
-totaldrilldown_revenue_parser.add_argument('year', type=int)
+class RevenueInfoApi(restful.Resource):
 
-
-# class RevenueTotalDrilldown(restful.Resource):
-
-#     def get(self):
-#         args = totaldrilldown_revenue_parser.parse_args()
-#         year = str(args['year'])
-#         filepath = os.path.join("data", "total_by_year_by_code", year+'.json')
-#         with open(filepath, 'r') as f:
-#             # TODO the file is already a JSON, it's dumb to send it this way...
-#             data = json.load(f)
-#             return data
+    def get(self):
+        ext = extract('year', Revenue.date)
+        dbyears = db.session.query(ext).group_by(ext).all()
+        # years = range(2008, 2016)
+        years = [str(i[0]) for i in dbyears]
+        infos = []
+        for year in years:
+            infos.append({"year": year})
+        return infos
 
 
 receita_api.add_resource(RevenueApi, '/receita/list')
@@ -296,32 +293,32 @@ receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 receita_api.add_resource(RevenueTotalApi, '/receita/total')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
 receita_api.add_resource(RevenueSeriesApi, '/receita/series')
-# receita_api.add_resource(RevenueTotalDrilldown, '/receita/totaldrilldown')
+receita_api.add_resource(RevenueInfoApi, '/receita/info')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
 # df_receita = pd.read_csv(csv_receita, encoding='utf8')
 
-years = range(2008, 2015)
+# years = range(2008, 2015)
 
 
-def get_year_data(year):
-    # TODO correct real year, an not month 01
-    csv_receita = os.path.join(
-        receita.root_path,
-        'static',
-        'receita-%s-01.csv' %
-        year)
-    return pd.read_csv(csv_receita, encoding='utf8').iterrows()
+# def get_year_data(year):
+#     # TODO correct real year, an not month 01
+#     csv_receita = os.path.join(
+#         receita.root_path,
+#         'static',
+#         'receita-%s-01.csv' %
+#         year)
+#     return pd.read_csv(csv_receita, encoding='utf8').iterrows()
 
 
-@receita.route('/receita/<int:year>')
-@receita.route('/receita/<int:year>/<int:page>')
-def receita_table(year, page=0):
-    receita_data = get_year_data(year)
-    return render_template(
-        'fulltable.html',
-        receita_data=receita_data,
-        years=years)
+# @receita.route('/receita/<int:year>')
+# @receita.route('/receita/<int:year>/<int:page>')
+# def receita_table(year, page=0):
+#     receita_data = get_year_data(year)
+#     return render_template(
+#         'fulltable.html',
+#         receita_data=receita_data,
+#         years=years)
 
 
 # @receita.route('/sankey/<path:filename>')
