@@ -1,0 +1,265 @@
+{
+    "$schema": "http://json-schema.org/draft-04/hyper-schema#",
+
+    
+
+  "definitions": {
+    "revenue": {
+      "$schema": "http://json-schema.org/draft-04/hyper-schema",
+      "title": "Revenue",
+      "definitions": {
+        "code": {
+            "description": "Revenue code",
+            "type": "string",
+            "pattern": "^(9.)?([1-9].){4}[0-9]{1,2}.[0-9]{1,2}$",
+            "example": "1.2.3.4.75.0"
+        },
+        "date": {
+            "description": "Date (???)",
+            "type": "string",
+            "format": "date-time",
+            "example": "2010-08-02T00:00:00+00:00"
+        },
+        "description": {
+            "description": "Description of the revenue",
+            "type": "string",
+            "example": "IMPOSTO S/ A PROPRIEDADE PREDIAL"
+        },
+        "id": {
+            "description": "ID of the revenue",
+            "type": "integer",
+            "example": "2"
+        },
+        "monthly_outcome": {
+            "description": "Revenue in a month",
+            "type": "number",
+            "example": "2392.21"
+        },
+        "monthly_predicted": {
+            "description": "Revenue predicted for a month",
+            "type": "number",
+            "example": "97974972.10"
+        },
+        "year": {
+          "description": "year",
+          "example": "2012",
+          // "format": "date-time",
+          "type": [
+            "number"
+          ]
+        },
+        "page": {
+          "description": "number of the page",
+          "example": "4",
+          // "format": "date-time",
+          "type": [
+            "number"
+          ]
+        },
+        "per_page_num": {
+          "description": "number of lines per page",
+          "example": "50",
+          // "format": "date-time",
+          "type": [
+            "number"
+          ]
+        },
+        "revenue_line": {
+            "description": "Revenue line",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/revenue/definitions/code"
+                },
+                "date": {
+                    "$ref": "#/definitions/revenue/definitions/date"
+                },
+                "description": {
+                    "$ref": "#/definitions/revenue/definitions/description"
+                },
+                "id": {
+                    "$ref": "#/definitions/revenue/definitions/id"
+                },
+                "monthly_outcome": {
+                    "$ref": "#/definitions/revenue/definitions/monthly_outcome"
+                },
+                "monthly_predicted": {
+                    "$ref": "#/definitions/revenue/definitions/monthly_predicted"
+                }
+            }
+        }
+
+
+        // "id": {
+        //   "description": "unique identifier of app",
+        //   "example": "01234567-89ab-cdef-0123-456789abcdef",
+        //   "format": "uuid",
+        //   "type": [
+        //     "string"
+        //   ]
+        // },
+        // "identity": {
+        //   "$ref": "#/definitions/revenue/definitions/id"
+        // },
+        // "created_at": {
+        //   "description": "when app was created",
+        //   "example": "2012-01-01T12:00:00Z",
+        //   "format": "date-time",
+        //   "type": [
+        //     "string"
+        //   ]
+        // },
+        // "updated_at": {
+        //   "description": "when app was updated",
+        //   "example": "2012-01-01T12:00:00Z",
+        //   "format": "date-time",
+        //   "type": [
+        //     "string"
+        //   ]
+        // }
+      },
+      "description": "This is the API for the revenue.",
+      "links": [
+        {
+            "title": "Revenue List",
+            "description": "Lists revenue lines.",
+            "href": "/api/v1/receita/list?years={(%23%2Fdefinitions%2Frevenue%2Fdefinitions%2Fyear)}&page={(%23%2Fdefinitions%2Frevenue%2Fdefinitions%2Fpage)}&per_page_num={(%23%2Fdefinitions%2Frevenue%2Fdefinitions%2Fper_page_num)}",
+        //   "href": "/apps/{(%23%2Fdefinitions%2Frevenue%2Fdefinitions%2Fidentity)}",
+            "method": "GET",
+            "rel": "instances"
+            // "required": ["years"]
+            // "schema": {
+            //     "type": "object",
+            //     "properties": {
+            //         "years": {
+            //             "type": "array",
+            //             "items": {
+            //                 "type": "integer"
+            //             },
+            //             "minItems": 1,
+            //             "maxItems": 2
+            //         },
+            //         "page": {
+            //             "type": "integer",
+            //             "minimum": 0,
+            //             "default": 0
+            //         },
+            //         "per_page_num": {
+            //             "type": "integer",
+            //             "minimum": 1,
+            //             "default": 100
+            //         }
+            //     }
+            // }
+        }
+
+        // {
+        //   "description": "Create a new app.",
+        //   "href": "/apps",
+        //   "method": "POST",
+        //   "rel": "create",
+        //   "schema": {
+        //     "properties": {
+        //     },
+        //     "type": [
+        //       "object"
+        //     ]
+        //   },
+        //   "title": "Create"
+        // },
+        // {
+        //   "description": "Delete an existing app.",
+        //   "href": "/apps/{(%23%2Fdefinitions%2Frevenue%2Fdefinitions%2Fidentity)}",
+        //   "method": "DELETE",
+        //   "rel": "destroy",
+        //   "title": "Delete"
+        // },
+        // {
+        //   "description": "Info for existing app.",
+        //   "href": "/apps/{(%23%2Fdefinitions%2Frevenue%2Fdefinitions%2Fidentity)}",
+        //   "method": "GET",
+        //   "rel": "self",
+        //   "title": "Info"
+        // },
+        // {
+        //   "description": "List existing apps.",
+        //   "href": "/apps",
+        //   "method": "GET",
+        //   "rel": "instances",
+        //   "title": "List"
+        // },
+        // {
+        //   "description": "Update an existing app.",
+        //   "href": "/apps/{(%23%2Fdefinitions%2Frevenue%2Fdefinitions%2Fidentity)}",
+        //   "method": "PATCH",
+        //   "rel": "update",
+        //   "schema": {
+        //     "properties": {
+        //     },
+        //     "type": [
+        //       "object"
+        //     ]
+        //   },
+        //   "title": "Update"
+        // }
+      ],
+      "properties": {
+                "code": {
+                    "$ref": "#/definitions/revenue/definitions/code"
+                },
+                "date": {
+                    "$ref": "#/definitions/revenue/definitions/date"
+                },
+                "description": {
+                    "$ref": "#/definitions/revenue/definitions/description"
+                },
+                "id": {
+                    "$ref": "#/definitions/revenue/definitions/id"
+                },
+                "monthly_outcome": {
+                    "$ref": "#/definitions/revenue/definitions/monthly_outcome"
+                },
+                "monthly_predicted": {
+                    "$ref": "#/definitions/revenue/definitions/monthly_predicted"
+                }
+          // "revenue-line": {
+          //   "$ref": "#/definitions/revenue/definitions/revenue_line"   
+          // }
+      //   // "created_at": {
+      //   //   "$ref": "#/definitions/revenue/definitions/created_at"
+      //   // },
+      //   // "id": {
+      //   //   "$ref": "#/definitions/revenue/definitions/id"
+      //   // },
+      //   // "updated_at": {
+      //   //   "$ref": "#/definitions/revenue/definitions/updated_at"
+      //   // }
+      },
+      "type": [
+        "array"
+      ]
+    }
+  },
+
+
+
+    
+    "properties": {
+        "revenue": {
+            "$ref": "#/definitions/revenue"
+        }
+    },
+    "type": [
+        "object"
+    ],
+    "description": "API for the project Gastos Abertos",
+    //"id": "api-gastosabertos",
+    "id": "http://gastosabertos.org/schema#",
+    "links": [
+      {
+        "href": "http://demo.gastosabertos.org",
+        "rel": "self"
+      }
+    ],
+    "title": "API Gastos Abertos"
+}
