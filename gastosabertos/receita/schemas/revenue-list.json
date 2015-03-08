@@ -67,8 +67,11 @@
 
     "links": [
         {
+            "title": "Revenue List",
+            "description": "Lists revenue lines.",
             "rel": "list",
             "href": "/api/v1/receita/list",
+            "method": "GET",
             "schema": {
                 "type": "object",
                 "properties": {
