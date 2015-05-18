@@ -29,18 +29,11 @@ def get_db():
 
 def parse_money(money_string):
     return str(money_string).replace('.', '').replace(',', '.')
-#        return -float(money_string[3:].replace('.', '').replace(',', '.'))
-#    else:
-#        return float(money_string[3:].replace('.', '').replace(',', '.'))
 
 
 def parse_date(date_string):
     new_date = datetime.strptime(date_string, '%d/%m/%Y')
     return new_date
-
-
-def parse_code(code_string):
-    return [int(i) for i in code_string.split('.')]
 
 
 def insert_rows(db, rows_data):
@@ -71,7 +64,7 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
         r['numero'] = row_i + 1
         r['orgao'] = row['Orgao']
         r['data_assinatura'] = parse_date(row['Data da Assinatura'])
-        r['vigencia'] = row['Vigencia']
+        r['vigencia'] = int(row['Vigencia'])
         r['objeto'] = row['Objeto']
         r['modalidade'] = row['Modalidade']
         r['evento'] = row['Evento']
