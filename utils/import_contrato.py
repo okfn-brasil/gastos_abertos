@@ -10,6 +10,7 @@ Options:
     -h --help   Show this message.
 '''
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 import calendar
 from sqlalchemy.sql.expression import insert
@@ -44,6 +45,7 @@ def insert_rows(db, rows_data):
 
 def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
     data = pd.read_excel(csv_file)
+    data = data.fillna(-1)
 
     cache = {}
     to_insert = []
@@ -61,10 +63,10 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
             # Progress counter
             print(str(int(current_line/total_lines*100))+'%')
 
-        r['numero'] = row_i + 1
+        r['numero'] = int(row_i) + 1
         r['orgao'] = row['Orgao']
         r['data_assinatura'] = parse_date(row['Data da Assinatura'])
-        r['vigencia'] = int(row['Vigencia'])
+        r['vigencia'] = int(row['Vigencia']) if not np.isnan(row['Vigencia']) else -1
         r['objeto'] = row['Objeto']
         r['modalidade'] = row['Modalidade']
         r['evento'] = row['Evento']
