@@ -93,6 +93,7 @@ def importdata(lines_per_insert=100):
     env.run_in("""
     python utils/import_revenue_codes.py
     python utils/import_revenue.py data/receitas_min.csv {lines_per_insert}
+    python utils/import_contrato.py
     """.format(lines_per_insert=lines_per_insert), inside_env=True)
     # env.run_in("python manage.py importdata", inside_env=True)
 
