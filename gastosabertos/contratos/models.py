@@ -6,8 +6,10 @@ from ..extensions import db
 
 import locale
 
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-
+try:
+    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+except:
+    locale.setlocale(locale.LC_ALL, '')
 
 class Contrato(db.Model):
 
