@@ -16,7 +16,8 @@ recursive-include gastosabertos/translations *
 recursive-include gastosabertos/receita/static *
 recursive-include gastosabertos/receita/templates *
 
-
+recursive-include gastosabertos/contratos/static *
+recursive-include gastosabertos/contratos/templates *
 
 
 # Excluding
