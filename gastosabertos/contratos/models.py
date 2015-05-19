@@ -6,10 +6,10 @@ from ..extensions import db
 
 import locale
 
-try:
-    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-except:
-    pass
+#try:
+#    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+#except:
+#    pass
 
 class Contrato(db.Model):
 
@@ -23,7 +23,7 @@ class Contrato(db.Model):
     objeto = Column(db.Text())
     modalidade = Column(db.Text())
     evento = Column(db.Text())
-    processo_administrativo = Column(db.Text())  
+    processo_administrativo = Column(db.Text())
     cnpj = Column(db.Text())
     nome_fornecedor = Column(db.Text())
     valor = Column(db.DECIMAL(19, 2))
@@ -34,7 +34,8 @@ class Contrato(db.Model):
 
     @property
     def fvalor(self):
-        return locale.currency(self.valor, grouping=True)
+        #return locale.currency(self.valor, grouping=True)
+        return '{:,.2f}'.format(self.valor).replace('.', 't').replace(',', '.').replace('t', ',')
 
     @property
     def fdata_assinatura(self):

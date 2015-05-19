@@ -3,13 +3,14 @@
 {% block content %}
 
 <div class="starter-template">
-<strong> Número de contratos: </strong>{{ contratos|length }}
+    <h1>{{ contratos[0].nome_fornecedor }}</h1>
+<h2>{{  contratos[0].cnpj }}</h2>
+<h3> Número de contratos: {{ contratos|length }} </h3>
+
 <table class="table table-striped">
 <thead>
 <th>Página</th>
 <th>Valor (R$)</th>
-<th>Nome do fornecedor</th>
-<th>CNPJ</th>
 <th>Orgão</th>
 <th>Vigência (dias)</th>
 <th>Modalidade</th>
@@ -27,8 +28,6 @@
 <tr>
 <td><a href="/contrato/{{ contrato.numero }}"><span class="glyphicon glyphicon-comment"></span>Discuta</a></td>
 <td>{{ contrato.fvalor }}</td>
-<td>{{ contrato.nome_fornecedor }}</td>
-<td>{{ contrato.cnpj }}</td>
 <td>{{ contrato.orgao }}</td>
 <td>{{ contrato.vigencia }}</td>
 <td>{{ contrato.modalidade }}</td>
