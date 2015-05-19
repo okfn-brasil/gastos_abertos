@@ -1,0 +1,49 @@
+{% extends "contratos.html" %}
+
+{% block content %}
+
+<div class="starter-template">
+<strong> Número de contratos: </strong>{{ contratos|length }}
+<table class="table">
+<thead>
+<th>Página</th>
+<th>Objeto</th>
+<th>Valor (R$)</th>
+<th>Nome do fornecedor</th>
+<th>CNPJ</th>
+<th>Orgão</th>
+<th>Vigência (dias)</th>
+<th>Modalidade</th>
+<th>Evento</th>
+<th>Processo Administrativo</th>
+<th>Licitação</th>
+<th>Data de Assinatura</th>
+<th>Data de Publicação</th>
+</thead>
+<tbody>
+{% for contrato in contratos %}
+<tr>
+<td><a href="/contrato/{{ contrato.numero }}"><span class="glyphicon glyphicon-comment"></span>Discuta</a></td>
+<td>{{ contrato.objeto }}</td>
+<td>{{ contrato.fvalor }}</td>
+<td>{{ contrato.nome_fornecedor }}</td>
+<td>{{ contrato.cnpj }}</td>
+<td>{{ contrato.orgao }}</td>
+<td>{{ contrato.vigencia }}</td>
+<td>{{ contrato.modalidade }}</td>
+<td>{{ contrato.evento }}</td>
+<td>{{ contrato.processo_administrativo }}
+<a class="btn btn-info" href="http://devcolab.each.usp.br/do/?per_page=20&q=%22{{ contrato.processo_administrativo }}%22&sort=data+asc">Diário Livre</a></a>
+<td>{{ contrato.licitacao }}</td>
+<td>{{ contrato.data_assinatura }}</td>
+<td>{{ contrato.data_publicacao }}</td>
+</tr>
+{% endfor %} 
+</tbody>
+</table>
+</div>
+
+{% endblock content %}
+
+
+

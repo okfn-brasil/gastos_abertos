@@ -4,6 +4,10 @@ from sqlalchemy import Column, types
 
 from ..extensions import db
 
+import locale
+
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+
 
 class Contrato(db.Model):
 
@@ -23,3 +27,13 @@ class Contrato(db.Model):
     valor = Column(db.DECIMAL(19, 2))
     licitacao = Column(db.String(60), nullable=False)
     data_publicacao = Column(db.DateTime())
+    file_url = Column(db.Text())
+    txt_file_url = Column(db.Text())
+
+    @property
+    def fvalor(self):
+        return locale.currency(self.valor, grouping=True)
+
+    @property
+    def clean_cnpj(self):
+        return ''.join([c for c in self.cnpj if c not in ['.', '/', '-']])

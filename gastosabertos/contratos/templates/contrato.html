@@ -1,0 +1,46 @@
+{% extends "contratos.html" %}
+
+{% block content %}
+
+<div class="starter-template">
+<p>
+<a class="btn btn-info" href="http://devcolab.each.usp.br/do/?per_page=20&q=%22{{ contrato.processo_administrativo }}%22&sort=data+asc">Informações no Diário Livre</a>
+<p>
+<strong>Objeto:</strong> {{ contrato.objeto }}
+<p>
+<table class="table">
+<thead>
+<th>Valor (R$)</th>
+<th>Nome do fornecedor</th>
+<th>CNPJ</th>
+<th>Orgão</th>
+<th>Vigência (dias)</th>
+<th>Modalidade</th>
+<th>Evento</th>
+<th>Processo Administrativo</th>
+<th>Licitação</th>
+<th>Data de Assinatura</th>
+<th>Data de Publicação</th>
+</thead>
+<tbody>
+<tr>
+<td>{{ contrato.fvalor }}</td>
+<td>{{ contrato.nome_fornecedor }}</td>
+<td><a href="/contrato/cnpj/{{ contrato.clean_cnpj }}">{{ contrato.cnpj }}</a></td>
+<td>{{ contrato.orgao }}</td>
+<td>{{ contrato.vigencia }}</td>
+<td>{{ contrato.modalidade }}</td>
+<td>{{ contrato.evento }}</td>
+<td>{{ contrato.processo_administrativo }}</td>
+<td>{{ contrato.licitacao }}</td>
+<td>{{ contrato.data_assinatura }}</td>
+<td>{{ contrato.data_publicacao }}</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+{% endblock content %}
+
+
+

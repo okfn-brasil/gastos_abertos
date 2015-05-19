@@ -4,8 +4,9 @@ import os
 import json
 from sqlalchemy import and_, extract, func
 from datetime import datetime
+from jinja2 import TemplateNotFound
 
-from flask import Blueprint, render_template, send_from_directory
+from flask import Blueprint, render_template, send_from_directory, abort
 from flask.ext import restful
 from flask.ext.restful import fields
 from flask.ext.restful.reqparse import RequestParser
@@ -13,7 +14,7 @@ from flask.ext.restful.reqparse import RequestParser
 from .models import Contrato
 from gastosabertos.extensions import db
 
-# Blueprint for Receita
+# Blueprint for Contrato
 contratos = Blueprint('contratos', __name__,
                     template_folder='templates',
                     static_folder='static',
@@ -119,4 +120,25 @@ class ContratoApi(restful.Resource):
         return contratos_data.all(), 200, headers
 
 contratos_api.add_resource(ContratoApi, '/contrato/list')
+
+@contratos.route('/contrato/<contract_id>')
+def show_contract(contract_id):
+    try:
+        contrato = db.session.query(Contrato).filter(Contrato.numero == contract_id).one()
+
+        return render_template('contrato.html', contrato=contrato)
+    except TemplateNotFound:
+        abort(404)
+
+
+@contratos.route('/contrato/cnpj/<cnpj>')
+def contracts_for_cnpj(cnpj):
+    cnpj = "{}.{}.{}/{}-{}".format( cnpj[0:2], cnpj[2:5], cnpj[5:8], cnpj[8:12], cnpj[12:14])
+    print cnpj
+    try:
+        contratos = db.session.query(Contrato).filter(Contrato.cnpj == cnpj).all()
+
+        return render_template('contratos-cnpj.html', contratos=contratos)
+    except TemplateNotFound:
+        abort(404)
 
