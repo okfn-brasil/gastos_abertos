@@ -6,7 +6,8 @@ from sqlalchemy import and_, extract, func
 from datetime import datetime
 from jinja2 import TemplateNotFound
 
-from flask import Blueprint, render_template, send_from_directory, abort
+from flask import Blueprint, render_template, send_from_directory, abort, request
+from flask.ext.paginate import Pagination
 from flask.ext import restful
 from flask.ext.restful import fields
 from flask.ext.restful.reqparse import RequestParser
@@ -134,11 +135,24 @@ def show_contract(contract_id):
 @contratos.route('/contrato/cnpj/<cnpj>')
 def contracts_for_cnpj(cnpj):
     cnpj = "{}.{}.{}/{}-{}".format( cnpj[0:2], cnpj[2:5], cnpj[5:8], cnpj[8:12], cnpj[12:14])
-    print cnpj
     try:
         contratos = db.session.query(Contrato).filter(Contrato.cnpj == cnpj).all()
 
         return render_template('contratos-cnpj.html', contratos=contratos)
+    except TemplateNotFound:
+        abort(404)
+
+@contratos.route('/contratos')
+def all_contracts():
+    page = int(request.args.get('page', 1))
+    per_page_num = 40
+    try:
+        print page, per_page_num
+        contratos = db.session.query(Contrato).offset(page*per_page_num).limit(per_page_num).all()
+        count = db.session.query(Contrato).count()
+        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+
+        return render_template('contratos-lista.html', contratos=contratos, pagination=pagination, count=count)
     except TemplateNotFound:
         abort(404)
 

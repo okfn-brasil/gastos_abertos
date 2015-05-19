@@ -37,5 +37,13 @@ class Contrato(db.Model):
         return locale.currency(self.valor, grouping=True)
 
     @property
+    def fdata_assinatura(self):
+        return self.data_assinatura.strftime("%d/%m/%Y")
+
+    @property
+    def fdata_publicacao(self):
+        return self.data_publicacao.strftime("%d/%m/%Y")
+
+    @property
     def clean_cnpj(self):
         return ''.join([c for c in self.cnpj if c not in ['.', '/', '-']])

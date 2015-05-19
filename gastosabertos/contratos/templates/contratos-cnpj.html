@@ -4,10 +4,9 @@
 
 <div class="starter-template">
 <strong> Número de contratos: </strong>{{ contratos|length }}
-<table class="table">
+<table class="table table-striped">
 <thead>
 <th>Página</th>
-<th>Objeto</th>
 <th>Valor (R$)</th>
 <th>Nome do fornecedor</th>
 <th>CNPJ</th>
@@ -23,8 +22,10 @@
 <tbody>
 {% for contrato in contratos %}
 <tr>
+<td colspan="12">{{ contrato.objeto }}</td>
+</tr>
+<tr>
 <td><a href="/contrato/{{ contrato.numero }}"><span class="glyphicon glyphicon-comment"></span>Discuta</a></td>
-<td>{{ contrato.objeto }}</td>
 <td>{{ contrato.fvalor }}</td>
 <td>{{ contrato.nome_fornecedor }}</td>
 <td>{{ contrato.cnpj }}</td>
@@ -35,9 +36,10 @@
 <td>{{ contrato.processo_administrativo }}
 <a class="btn btn-info" href="http://devcolab.each.usp.br/do/?per_page=20&q=%22{{ contrato.processo_administrativo }}%22&sort=data+asc">Diário Livre</a></a>
 <td>{{ contrato.licitacao }}</td>
-<td>{{ contrato.data_assinatura }}</td>
-<td>{{ contrato.data_publicacao }}</td>
+<td>{{ contrato.fdata_assinatura }}</td>
+<td>{{ contrato.fdata_publicacao }}</td>
 </tr>
+
 {% endfor %} 
 </tbody>
 </table>
