@@ -142,17 +142,66 @@ def contracts_for_cnpj(cnpj):
     except TemplateNotFound:
         abort(404)
 
+@contratos.route('/contrato/orgao/<orgao>')
+def contracts_for_orgao(orgao):
+    page = int(request.args.get('page', 1))
+    per_page_num = 40
+ 
+    try:
+        contratos_query = db.session.query(Contrato).filter(Contrato.orgao == orgao)
+	contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        count = contratos_query.count()
+        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+
+
+        return render_template('contratos-orgao.html', contratos=contratos, pagination=pagination, count=count, filter_info=u"Orgão", filter_value=orgao)
+    except TemplateNotFound:
+        abort(404)
+
+@contratos.route('/contrato/modalidade/<modalidade>')
+def contracts_for_modalidade(modalidade):
+    page = int(request.args.get('page', 1))
+    per_page_num = 40
+ 
+    try:
+        contratos_query = db.session.query(Contrato).filter(Contrato.modalidade == modalidade)
+	contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        count = contratos_query.count()
+        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+
+        return render_template('contratos-orgao.html', contratos=contratos, pagination=pagination, count=count, filter_info="Modalidade", filter_value=modalidade)
+ 
+    except TemplateNotFound:
+        abort(404)
+
+@contratos.route('/contrato/evento/<evento>')
+def contracts_for_evento(evento):
+    page = int(request.args.get('page', 1))
+    per_page_num = 40
+ 
+    try:
+        contratos_query = db.session.query(Contrato).filter(Contrato.evento == evento)
+	contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        count = contratos_query.count()
+        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+
+        return render_template('contratos-orgao.html', contratos=contratos, pagination=pagination, count=count, filter_info="Evento", filter_value=evento)
+ 
+    except TemplateNotFound:
+        abort(404)
+
+
+
 @contratos.route('/contratos')
 def all_contracts():
     page = int(request.args.get('page', 1))
     per_page_num = 40
     try:
-        print page, per_page_num
-        contratos = db.session.query(Contrato).offset(page*per_page_num).limit(per_page_num).all()
+        contratos = db.session.query(Contrato).offset((page-1)*per_page_num).limit(per_page_num).all()
         count = db.session.query(Contrato).count()
         pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
 
-        return render_template('contratos-lista.html', contratos=contratos, pagination=pagination, count=count)
+        return render_template('todos-contratos.html', contratos=contratos, pagination=pagination, count=count)
     except TemplateNotFound:
         abort(404)
 
