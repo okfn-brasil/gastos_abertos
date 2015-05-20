@@ -135,17 +135,27 @@ def show_contract(contract_id):
 @contratos.route('/contrato/cnpj/<cnpj>')
 def contracts_for_cnpj(cnpj):
     cnpj = "{}.{}.{}/{}-{}".format( cnpj[0:2], cnpj[2:5], cnpj[5:8], cnpj[8:12], cnpj[12:14])
-    try:
-        contratos = db.session.query(Contrato).filter(Contrato.cnpj == cnpj).all()
+    #    contratos = db.session.query(Contrato).filter(Contrato.cnpj == cnpj).all()
 
-        return render_template('contratos-cnpj.html', contratos=contratos)
+    page = int(request.args.get('page', 1))
+    per_page_num = 10
+ 
+    try:
+        contratos_query = db.session.query(Contrato).filter(Contrato.cnpj == cnpj)
+	contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        count = contratos_query.count()
+        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+
+
+        return render_template('contratos-cnpj.html', contratos=contratos, pagination=pagination, count=count, filter_info=u"Fornecedor", filter_value=cnpj)
+
     except TemplateNotFound:
         abort(404)
 
 @contratos.route('/contrato/orgao/<orgao>')
 def contracts_for_orgao(orgao):
     page = int(request.args.get('page', 1))
-    per_page_num = 40
+    per_page_num = 10
  
     try:
         contratos_query = db.session.query(Contrato).filter(Contrato.orgao == orgao)
@@ -161,7 +171,7 @@ def contracts_for_orgao(orgao):
 @contratos.route('/contrato/modalidade/<modalidade>')
 def contracts_for_modalidade(modalidade):
     page = int(request.args.get('page', 1))
-    per_page_num = 40
+    per_page_num = 10
  
     try:
         contratos_query = db.session.query(Contrato).filter(Contrato.modalidade == modalidade)
@@ -177,7 +187,7 @@ def contracts_for_modalidade(modalidade):
 @contratos.route('/contrato/evento/<evento>')
 def contracts_for_evento(evento):
     page = int(request.args.get('page', 1))
-    per_page_num = 40
+    per_page_num = 10
  
     try:
         contratos_query = db.session.query(Contrato).filter(Contrato.evento == evento)

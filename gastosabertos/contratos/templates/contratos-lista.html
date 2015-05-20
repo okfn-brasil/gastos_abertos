@@ -24,7 +24,15 @@
 {% for contrato in contratos %}
 <tr>
 <td rowspan="2">
-{{ contrato.numero }}
+<strong>{{ contrato.numero }}</strong>
+<p>
+{% if contrato.file_url %}
+<a href="{{ contrato.file_url }}"><span class="glyphicon glyphicon-download"></span>Original</a>
+{% endif %}
+<p>
+{% if contrato.txt_file_url %}
+<a href="{{ contrato.txt_file_url }}"><span class="glyphicon glyphicon-file"></span> Txt</a>
+{% endif %}
 </td>
 <td colspan="11" style="text-aling: center;">
     <div style="width: 50%; margin: auto;">

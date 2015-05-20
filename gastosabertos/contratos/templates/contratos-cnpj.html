@@ -1,11 +1,32 @@
 {% extends "contratos-lista.html" %}
 
+{% block title %}
+{{ contratos[0].nome_fornecedor }}
+{% endblock %}
 {% block acima_lista %}
 <h1>{{ contratos[0].nome_fornecedor }}</h1>
 <h2>{{  contratos[0].cnpj }}</h2>
-<h3> Número de contratos: {{ contratos|length }} </h3>
+<h3> Número de contratos: {{ count }} </h3>
+{{ pagination.links }}
 {% endblock %}
 
 
 {% block abaixo_lista %}
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'contratosprefeituradesaopaulo';
+    var disqus_identifier = '{{ contratos[0].nome_fornecedor }}';
+    var disqus_title = '{{ contratos[0].nome_fornecedor }}';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</div>
+
 {% endblock %}
