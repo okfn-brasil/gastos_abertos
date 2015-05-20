@@ -5,9 +5,19 @@
 
 <div class="starter-template">
 <p>
-<a class="btn btn-info" href="http://devcolab.each.usp.br/do/?per_page=20&q=%22{{ contrato.processo_administrativo }}%22&sort=data+asc">Informações no Diário Livre</a>
-<p>
+{% if contrato.file_url %}
+<div class="btn-group btn-group-center" role="toolbar" style="text-align: center;">
+<a class="btn btn-group btn-info" href="{{ contrato.file_url }}"><span class="glyphicon glyphicon-download"></span>Original</a>
+{% endif %}
+{% if contrato.txt_file_url %}
+<a class="btn btn-group btn-info" href="{{ contrato.txt_file_url }}"><span class="glyphicon glyphicon-file"></span> Txt</a>
+{% endif %}
+<a class="btn btn-group btn-info" href="http://devcolab.each.usp.br/do/?per_page=20&q=%22{{ contrato.processo_administrativo }}%22&sort=data+asc">Informações no Diário Livre</a>
+</div>
+<p/>
+<div>
 <strong>Objeto:</strong> {{ contrato.objeto }}
+</div>
 <p>
 <table class="table">
 <thead>
