@@ -1,0 +1,11 @@
+{% extends "contratos-lista.html" %}
+
+{% block acima_lista %}
+<h1>{{ filter_info }}: {{ filter_value }}</h1>
+<h2> Número de contratos: {{ count }} </h2>
+{{ pagination.links }}
+{% endblock %}
+
+{% block abaixo_lista %}
+{{ pagination.links }}
+{% endblock %}

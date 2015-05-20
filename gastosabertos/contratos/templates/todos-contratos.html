@@ -1,0 +1,12 @@
+{% extends "contratos-lista.html" %}
+
+{% block acima_lista %}
+<h2>{{ count }} contratos</h2>
+{{ pagination.links }}
+
+{% endblock %}
+
+
+{% block abaixo_lista %}
+{{ pagination.links }}
+{% endblock %}
