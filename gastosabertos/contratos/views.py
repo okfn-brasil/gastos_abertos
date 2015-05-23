@@ -171,7 +171,7 @@ class ContratoAggregateApi(ContratoApi):
         # This allows to group by years or months for example.
         parts = {
             'year': (lambda field: [func.extract('year', field)],
-                     lambda values: values[0]),
+                     lambda values: list(values)[0]),
             'month': (lambda field: [func.extract('year', field), func.extract('month', field)],
                       lambda values: '-'.join([format(v, '02') for v in values])),
             'day': (lambda field: [func.extract('year', field), func.extract('month', field), func.extract('day', field)],
