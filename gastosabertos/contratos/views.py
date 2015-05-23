@@ -2,7 +2,7 @@
 
 import os
 import json
-from sqlalchemy import and_, extract, func
+from sqlalchemy import and_, extract, func, desc
 from datetime import datetime
 from jinja2 import TemplateNotFound
 
@@ -41,6 +41,7 @@ contratos_list_parser.add_argument('processo_administrativo')
 contratos_list_parser.add_argument('nome_fornecedor')
 contratos_list_parser.add_argument('licitacao')
 contratos_list_parser.add_argument('group_by', default='')
+contratos_list_parser.add_argument('order_by', 'id')
 contratos_list_parser.add_argument('page', type=int, default=0)
 contratos_list_parser.add_argument('per_page_num', type=int, default=100)
 
@@ -112,6 +113,26 @@ class ContratoApi(restful.Resource):
 
         return contratos_data
 
+    def order(self, contratos_data):
+        args = contratos_list_parser.parse_args()
+        order_by = args['order_by'].split(',')
+
+        if order_by:
+            order_by_args = []
+            for field_name in order_by:
+                desc_ = False
+                if field_name.startswith('-'):
+                    field_name = field_name[1:]
+                    desc_ = True
+                if field_name in contratos_fields or field_name == 'count':
+                    order_by_arg = field_name
+                    if desc_:
+                        order_by_arg = desc(order_by_arg)
+                    order_by_args.append(order_by_arg)
+            contratos_data = contratos_data.order_by(*order_by_args)
+
+        return contratos_data
+
 
 class ContratoListApi(ContratoApi):
 
@@ -119,6 +140,7 @@ class ContratoListApi(ContratoApi):
     def get(self):
         contratos_data = db.session.query(Contrato)
 
+        contratos_data = self.order(contratos_data)
         contratos_data = self.filter(contratos_data)
 
         headers = {
@@ -136,20 +158,18 @@ contratos_api.add_resource(ContratoListApi, '/contrato/list')
 class ContratoAggregateApi(ContratoApi):
 
     def get(self):
-        from sqlalchemy import func
-
         args = contratos_list_parser.parse_args()
         group_by = args['group_by'].split(',')
         group_by_fields = []
 
         query_args = [func.count(Contrato.id).label('count')]
         keys = []
-        for field in group_by:
-            if field in contratos_fields.keys():
-                group_by_field = getattr(Contrato, field)
+        for field_name in group_by:
+            if field_name in contratos_fields:
+                group_by_field = getattr(Contrato, field_name)
                 group_by_fields.append(group_by_field)
                 query_args.append(group_by_field)
-                keys.append(field)
+                keys.append(field_name)
 
         query_args.append(func.sum(Contrato.valor).label('valor'))
         keys.append('valor')
@@ -158,6 +178,7 @@ class ContratoAggregateApi(ContratoApi):
         if group_by_fields:
             contratos_data = contratos_data.group_by(*group_by_fields)
 
+        contratos_data = self.order(contratos_data)
         contratos_data = self.filter(contratos_data)
 
         headers = {
