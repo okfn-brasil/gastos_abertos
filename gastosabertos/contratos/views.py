@@ -40,7 +40,7 @@ contratos_list_parser.add_argument('objeto')
 contratos_list_parser.add_argument('processo_administrativo')
 contratos_list_parser.add_argument('nome_fornecedor')
 contratos_list_parser.add_argument('licitacao')
-contratos_list_parser.add_argument('group_by')
+contratos_list_parser.add_argument('group_by', default='')
 contratos_list_parser.add_argument('page', type=int, default=0)
 contratos_list_parser.add_argument('per_page_num', type=int, default=100)
 
