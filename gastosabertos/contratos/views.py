@@ -162,11 +162,36 @@ class ContratoAggregateApi(ContratoApi):
         group_by = args['group_by'].split(',')
         group_by_fields = []
 
+        # Always return a count
         query_args = [func.count(Contrato.id).label('count')]
         keys = []
+        partial_date_fields = []
+        # Tuples with SQLAlchemy function and args to get parts of values.
+        # This allows to goup by years or months for example.
+        # using `func.substr` instead of `func.year` and `func.month` to keep
+        # supporting sqlite.
+        parts = {
+            'year': (func.substr, (0, 5)),
+            'month': (func.substr, (0, 8)),
+            'day': (func.substr, (0, 11)),
+        }
         for field_name in group_by:
+            part = None
+            if field_name.endswith(tuple(map(lambda a: '__{}'.format(a), parts.keys()))):
+                # User asked to group using only part of value.
+                # Get the original field name and which part we should use.
+                # "?group_by=data_publicacao__year" results in
+                # field_name = 'data_publicacao'
+                # part = 'year'
+                field_name, part = field_name.split('__', 1)
             if field_name in contratos_fields:
                 group_by_field = getattr(Contrato, field_name)
+                if part:
+                    # If the original field type was Datetime we need to change it to string
+                    if isinstance(contratos_fields[field_name], fields.DateTime):
+                        partial_date_fields.append(field_name)
+                    # Apply the "part" function
+                    group_by_field = parts[part][0](*((group_by_field, ) + parts[part][1]))
                 group_by_fields.append(group_by_field)
                 query_args.append(group_by_field)
                 keys.append(field_name)
@@ -188,13 +213,17 @@ class ContratoAggregateApi(ContratoApi):
             'X-Total-Count': contratos_data.count()
         }
 
+        # Create the dictionary used to marshal
         fields_ = {'count': fields.Integer()}
         fields_.update({key: contratos_fields[key] for key in keys})
+        # Set partial dates type to string
+        for field_name in partial_date_fields:
+            fields_[field_name] = fields.String()
 
+        # Create a list of dictionaries
         data = map(lambda a: dict(zip(['count'] + keys, a)), contratos_data.all())
 
-        output = restful.marshal(data, fields_)
-        return output, 200, headers
+        return restful.marshal(data, fields_), 200, headers
 
 contratos_api.add_resource(ContratoAggregateApi, '/contrato/aggregate')
 
