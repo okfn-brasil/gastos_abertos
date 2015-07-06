@@ -281,7 +281,7 @@ class RevenueInfoApi(restful.Resource):
         ext = extract('year', Revenue.date)
         dbyears = db.session.query(ext).group_by(ext).all()
         # years = range(2008, 2016)
-        years = [str(i[0]) for i in dbyears]
+        years = [str(int(i[0])) for i in dbyears]
         infos = []
         for year in years:
             infos.append({"year": year})
