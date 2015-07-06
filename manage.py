@@ -34,9 +34,16 @@ def initdb():
 def importdata():
     """Import the data to the database"""
     from utils.import_revenue_codes import import_codes
-    from utils.import_revenue import insert_all
+    from utils import import_revenue
+    from utils import import_contrato
+
+    # Revenue
     import_codes(db)
-    insert_all(db, csv_file='data/receitas_min.csv', lines_per_insert=80)
+    import_revenue.insert_all(db, csv_file='data/receitas_min.csv')
+    # insert_all(db, csv_file='data/receitas_min.csv', lines_per_insert=80)
+
+    # Contratos
+    import_contrato.insert_all(db, csv_file='data/contratos-2014.xls') 
 
 
 if __name__ == "__main__":

@@ -8,4 +8,29 @@ g++
 pandas
 flask
 
-gunicorn
+
+
+## Usando Postgres
+
+Seguir:
+https://wiki.archlinux.org/index.php/PostgreSQL#Installing_PostgreSQL
+para instalar e configurar BD; criar usuário e database nova.
+Adicione uma senha para o novo usuários:
+
+	ALTER USER gastosabertos with encrypted password '<senha>'
+
+
+
+Nova dep
+
+    pip install psycopg2
+
+Configurar parâmetros em `settings/local_settings.py`:
+
+    INSTANCE_FOLDER_PATH = "/caminho_para_o_repo/gastos_abertos/instance"
+    SQLALCHEMY_DATABASE_URI = 'postgresql://gastosabertos:<senha>@localhost/gastosabertos'
+
+Criar e iniciar BD:
+
+    python manage.py initdb
+    python manage.py importdata

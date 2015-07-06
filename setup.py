@@ -22,7 +22,7 @@ setup(
         'Flask-Babel',
         'Flask-Testing',
         'Flask-Restful',
-	'Flask-Paginate',
+        'Flask-Paginate',
         'Flask-CORS',
         'fabric',
         'docopt',

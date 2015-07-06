@@ -9,10 +9,12 @@ Usage:
 Options:
     -h --help   Show this message.
 '''
-import pandas as pd
+import sys
 from datetime import datetime, timedelta
 import calendar
+
 from sqlalchemy.sql.expression import insert
+import pandas as pd
 from docopt import docopt
 
 from gastosabertos import create_app
@@ -54,6 +56,7 @@ def insert_rows(db, rows_data):
 
 
 def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
+    print("Importing Revenues from: " + csv_file)
     data = pd.read_csv(csv_file, encoding='utf8')
 
     cache = {}
@@ -70,7 +73,9 @@ def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
             insert_rows(db, to_insert)
             to_insert = []
             # Progress counter
-            print(str(int(current_line/total_lines*100))+'%')
+            # print("\r %s%%" % int(current_line/total_lines*100))
+            sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
+            sys.stdout.flush()
 
         r['original_code'] = row['codigo']
         r['description'] = unicode(row['descricao'])
@@ -128,6 +133,10 @@ def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
 
     if len(to_insert) > 0:
         insert_rows(db, to_insert)
+
+    sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
+    sys.stdout.flush()
+    print("")
 
 
 if __name__ == '__main__':

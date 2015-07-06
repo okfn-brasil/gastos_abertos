@@ -9,6 +9,7 @@ Usage:
 Options:
     -h --help   Show this message.
 '''
+import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -44,6 +45,7 @@ def insert_rows(db, rows_data):
 
 
 def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
+    print("Importing Contratos from: " + csv_file)
     data = pd.read_excel(csv_file)
     data = data.fillna(-1)
 
@@ -61,7 +63,9 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
             insert_rows(db, to_insert)
             to_insert = []
             # Progress counter
-            print(str(int(current_line/total_lines*100))+'%')
+            # print(str(int(current_line/total_lines*100))+'%')
+            sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
+            sys.stdout.flush()
 
         r['numero'] = int(row_i) + 1
         r['orgao'] = row['Orgao']
@@ -74,13 +78,17 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
         r['cnpj'] = row['CNPJ']
         r['nome_fornecedor'] = row['Nome']
         r['valor'] = parse_money(row['Valor'])
-	r['licitacao'] = row['Licitacao\n']
+        r['licitacao'] = row['Licitacao\n']
         r['data_publicacao'] = parse_date(row['Data Publicacao'])
 
         to_insert.append(r)
 
     if len(to_insert) > 0:
         insert_rows(db, to_insert)
+
+    sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
+    sys.stdout.flush()
+    print("")
 
 
 if __name__ == '__main__':
