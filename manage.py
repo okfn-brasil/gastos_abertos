@@ -43,7 +43,7 @@ def importdata():
     # insert_all(db, csv_file='data/receitas_min.csv', lines_per_insert=80)
 
     # Contratos
-    import_contrato.insert_all(db, csv_file='data/contratos-2014.xls') 
+    import_contrato.insert_all(db, csv_file='data/contratos-2014.xls')
 
 
 if __name__ == "__main__":

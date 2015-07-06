@@ -20,4 +20,5 @@ if BASE_DIR not in sys.path:
 
 # give wsgi the "application"
 from gastosabertos import create_app
-application = create_app()
+instance_folder = os.path.join(os.path.expanduser("~"), "instance")
+application = create_app(instance_folder=instance_folder)
