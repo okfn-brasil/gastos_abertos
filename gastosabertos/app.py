@@ -59,7 +59,9 @@ def configure_app(app, config=None):
     app.config.from_pyfile(non_instance_config, silent=True)
 
     # http://flask.pocoo.org/docs/config/#instance-folders
-    app.config.from_pyfile('production.cfg', silent=True)
+    instance_config = os.path.join(
+        app.config.get('INSTANCE_FOLDER_PATH', ''), 'production.cfg')
+    app.config.from_pyfile(instance_config, silent=True)
 
     if config:
         app.config.from_object(config)
