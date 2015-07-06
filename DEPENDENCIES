@@ -20,10 +20,15 @@ Adicione uma senha para o novo usuários:
 	ALTER USER gastosabertos with encrypted password '<senha>'
 
 
+postgresql-server-dev-9.4
+libpq-dev
+
 
 Nova dep
 
     pip install psycopg2
+
+
 
 Configurar parâmetros em `settings/local_settings.py`:
 
