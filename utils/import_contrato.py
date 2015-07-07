@@ -9,7 +9,7 @@ Usage:
 Options:
     -h --help   Show this message.
 '''
-import sys
+
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -18,8 +18,8 @@ from sqlalchemy.sql.expression import insert
 from docopt import docopt
 
 from gastosabertos import create_app
-
-from gastosabertos.contratos.models import Contrato 
+from gastosabertos.contratos.models import Contrato
+from utils import Counter
 
 
 def get_db():
@@ -51,11 +51,9 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
 
     cache = {}
     to_insert = []
-    total_lines = len(data)
-    current_line = 0.0
+    counter = Counter(len(data))
 
     for row_i, row in data.iterrows():
-        current_line += 1
 
         r = {}
 
@@ -63,9 +61,7 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
             insert_rows(db, to_insert)
             to_insert = []
             # Progress counter
-            # print(str(int(current_line/total_lines*100))+'%')
-            sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
-            sys.stdout.flush()
+            counter.update(lines_per_insert)
 
         r['numero'] = int(row_i) + 1
         r['orgao'] = row['Orgao']
@@ -86,9 +82,7 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
     if len(to_insert) > 0:
         insert_rows(db, to_insert)
 
-    sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
-    sys.stdout.flush()
-    print("")
+    counter.end()
 
 
 if __name__ == '__main__':
