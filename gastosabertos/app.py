@@ -11,13 +11,15 @@ from .config import DefaultConfig, INSTANCE_FOLDER_PATH
 from .extensions import db
 from .receita import receita
 from .contratos import contratos
+from .execucao import execucao
 
 # For import *
 __all__ = ['create_app']
 
 DEFAULT_BLUEPRINTS = (
     receita,
-    contratos
+    contratos,
+    execucao
 )
 
 

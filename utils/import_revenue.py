@@ -18,8 +18,8 @@ import pandas as pd
 from docopt import docopt
 
 from gastosabertos import create_app
-
 from gastosabertos.receita.models import Revenue, RevenueCode
+from utils import ProgressCounter
 
 
 def get_db():
@@ -61,11 +61,9 @@ def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
 
     cache = {}
     to_insert = []
-    total_lines = len(data)
-    current_line = 0.0
+    counter = ProgressCounter(len(data))
 
     for row_i, row in data.iterrows():
-        current_line += 1
 
         r = {}
 
@@ -73,12 +71,10 @@ def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
             insert_rows(db, to_insert)
             to_insert = []
             # Progress counter
-            # print("\r %s%%" % int(current_line/total_lines*100))
-            sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
-            sys.stdout.flush()
+            counter.update(lines_per_insert)
 
         r['original_code'] = row['codigo']
-        r['description'] = unicode(row['descricao'])
+        r['description'] = row['descricao']
         r['date'] = parse_date(row['data'])
         r['monthly_outcome'] = parse_money(row['realizado_mensal'])
         r['monthly_predicted'] = parse_money(row['previsto_mensal'])
@@ -134,9 +130,7 @@ def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
     if len(to_insert) > 0:
         insert_rows(db, to_insert)
 
-    sys.stdout.write("\r%s%%" % int(current_line/total_lines*100))
-    sys.stdout.flush()
-    print("")
+    counter.end()
 
 
 if __name__ == '__main__':
