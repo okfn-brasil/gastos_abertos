@@ -19,7 +19,7 @@ from docopt import docopt
 
 from gastosabertos import create_app
 from gastosabertos.receita.models import Revenue, RevenueCode
-from utils import Counter
+from utils import ProgressCounter
 
 
 def get_db():
@@ -61,7 +61,7 @@ def insert_all(db, csv_file='../data/receitas_min.csv', lines_per_insert=100):
 
     cache = {}
     to_insert = []
-    counter = Counter(len(data))
+    counter = ProgressCounter(len(data))
 
     for row_i, row in data.iterrows():
 
