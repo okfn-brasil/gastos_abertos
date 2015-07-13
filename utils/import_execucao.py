@@ -77,6 +77,7 @@ def insert_csv(csv, lines_per_insert=100):
 
 if __name__ == '__main__':
     db = get_db()
+    Execucao.metadata.create_all(db.engine, checkfirst=True)
 
     arguments = docopt(__doc__)
     args = {}
