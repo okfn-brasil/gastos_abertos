@@ -70,7 +70,7 @@ def deploy():
 
     env.run_in("""
     git pull
-    python setup.py install
+    python setup.py develop
     touch wsgi.py
     """, inside_env=True)
 
