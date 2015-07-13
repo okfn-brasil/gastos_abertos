@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from sqlalchemy import and_, extract, func
-from datetime import datetime
+# from sqlalchemy import and_, extract, func
+# from datetime import datetime
 
 from flask import Blueprint
-from flask.ext import restful
-from flask.ext.restful import fields
+# from flask.ext import restful
+# from flask.ext.restful import fields
 # from flask.ext.restful.utils import cors
-from flask.ext.restful.reqparse import RequestParser
+# from flask.ext.restful.reqparse import RequestParser
+from flask.ext.restplus import Resource
 
 from .models import Execucao
-from gastosabertos.extensions import db
+from gastosabertos.extensions import db, api
 
 # Blueprint for Execucao
 execucao = Blueprint('execucao', __name__,
@@ -20,10 +21,14 @@ execucao = Blueprint('execucao', __name__,
 
 
 # Create the restful API
-execucao_api = restful.Api(execucao, prefix="/api/v1/execucao")
+# execucao_api = restful.Api(execucao, prefix="/api/v1/execucao")
 
 
-class ExecucaoInfoApi(restful.Resource):
+ns = api.namespace('execucao', 'Dados sobre execução')
+
+
+@ns.route('/info')
+class ExecucaoInfoApi(Resource):
 
     def get(self):
         dbyears = db.session.query(
@@ -37,4 +42,4 @@ class ExecucaoInfoApi(restful.Resource):
         }
 
 
-execucao_api.add_resource(ExecucaoInfoApi, '/info')
+# execucao_api.add_resource(ExecucaoInfoApi, '/info')

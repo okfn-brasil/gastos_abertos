@@ -8,7 +8,7 @@ from flask.ext.babel import Babel
 from flask.ext.cors import CORS
 
 from .config import DefaultConfig, INSTANCE_FOLDER_PATH
-from .extensions import db
+from .extensions import db, api
 from .receita import receita
 from .contratos import contratos
 from .execucao import execucao
@@ -37,14 +37,17 @@ def create_app(config=None, app_name=None, instance_folder=None,
     app = Flask(__name__, instance_path=instance_folder,
                 instance_relative_config=True)
     configure_app(app, config)
-    configure_hook(app)
+    # configure_hook(app)
     configure_blueprints(app, blueprints)
     configure_extensions(app)
     configure_logging(app)
     configure_error_handlers(app)
 
     # Full CORS!
-    cors = CORS(app, resources={r"*": {"origins": "*"}})
+    CORS(app, resources={r"*": {"origins": "*"}})
+
+    # API Restplus
+    api.init_app(app)
 
     return app
 
@@ -115,20 +118,21 @@ def configure_logging(app):
     app.logger.addHandler(info_file_handler)
 
     # Testing
-    #app.logger.info("testing info.")
-    #app.logger.warn("testing warn.")
-    #app.logger.error("testing error.")
+    # app.logger.info("testing info.")
+    # app.logger.warn("testing warn.")
+    # app.logger.error("testing error.")
 
 
-def configure_hook(app):
-    @app.before_request
-    def before_request():
-        pass
+# def configure_hook(app):
 
-    # @app.after_request
-    # @cors.crossdomain(origin='*')
-    # def after(response):
-    #     return response
+#     @app.before_request
+#     def before_request():
+#         pass
+
+#     # @app.after_request
+#     # @cors.crossdomain(origin='*')
+#     # def after(response):
+#     #     return response
 
 
 def configure_error_handlers(app):

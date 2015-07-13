@@ -24,6 +24,7 @@ setup(
         'Flask-Restful',
         'Flask-Paginate',
         'Flask-CORS',
+        'Flask-Restplus',
         'fabric',
         'docopt',
         'pandas'
