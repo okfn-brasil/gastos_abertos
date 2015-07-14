@@ -25,6 +25,7 @@ setup(
         'Flask-Paginate',
         'Flask-CORS',
         'Flask-Restplus',
+        'geoalchemy2',
         'fabric',
         'docopt',
         'pandas'

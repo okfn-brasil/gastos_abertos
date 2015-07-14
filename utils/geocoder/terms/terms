@@ -1,0 +1,68 @@
+>> Term 100
+(rua|r\.)?!em situação de
+(avenida|av\.)
+
+>> Term 90
+(jardim|jd\.)
+(travessa|trav\.)
+favela
+praca
+viela
+
+>> Term 80
+vila
+ponte
+parque
+escola
+bairro
+quadra
+corrego
+viaduto
+ladeira
+ginasio
+chacara
+estadio
+hospital
+distrito
+autodromo
+cemiterio
+instituto
+biblioteca
+maternidade
+Polo Cultural
+Centro Cultural
+Complexo Esportivo
+Conjunto Habitacional
+Conservatório Musical
+!UBS
+!CDC
+!EMEF
+!EMEI
+!CEI
+!CEU
+!APA
+
+>> Name 100
+#Cangaíba
+#Anhembi
+Guarapiranga
+Centro de Referência Especializado da Assistência Social
+Theatro Municipal
+Câmara Municipal
+Edifício Matarazzo
+Fábrica do Samba
+Unibes
+Elevado Costa e Silva
+Centro de Manejo da Fauna Silvestre
+crematorio
+AACD
+GRAAC
+A.C.S.E.S.M. Camisa Verde e Branco
+Real Parque
+A.C. Camargo Câncer Center
+Centro de Recreação e Desenvolvimento da Criança Especial
+Complexo Anhembi
+Paraisópolis
+Água Espraiada
+Faria Lima
+Água Branca

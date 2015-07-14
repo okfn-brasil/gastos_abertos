@@ -22,6 +22,9 @@ Adicione uma senha para o novo usuários:
 
 postgresql-server-dev-9.4
 libpq-dev
+postgis
+
+    psql -U postgres -d gastosabertos -c "CREATE EXTENSION postgis;"
 
 
 Nova dep
