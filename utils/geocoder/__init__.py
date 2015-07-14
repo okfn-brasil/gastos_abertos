@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/v python
 # coding: utf-8
 
 from __future__ import unicode_literals  # unicode by default
@@ -118,6 +118,7 @@ class Geocoder(object):
         s = term[:60]
         # check cache
         # TODO: remove this .encode for Python 3
+        print(s)
         cache_key = s.encode("utf-8")
         term_geo = self.cache.get(cache_key)
         if not term_geo:
@@ -169,9 +170,10 @@ class Geocoder(object):
             terms = self.terms_db.search(string, canonical)
             if terms:
                 all_terms += terms
-        # gt = GeoEntity(all_terms)
-        # gt.geocode(self)
-        return self.geocode(all_terms)
+        gt = GeoEntity(all_terms)
+        gt.geocode(self)
+        return gt
+        # return self.geocode(all_terms)
 
     def close(self):
         """Closes cache."""

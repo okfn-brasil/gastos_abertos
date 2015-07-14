@@ -14,4 +14,4 @@ class Execucao(db.Model):
     id = Column(db.Integer, primary_key=True)
     # code = Column(db.String(50), nullable=False)
     data = Column(postgresql.JSONB)
-    geo = Column(Geometry('POINT'))
+    point = Column(Geometry('POINT'))
