@@ -36,6 +36,7 @@ def importdata():
     from utils.import_revenue_codes import import_codes
     from utils import import_revenue
     from utils import import_contrato
+    from utils import import_execucao
 
     # Revenue
     import_codes(db)
@@ -44,6 +45,10 @@ def importdata():
 
     # Contratos
     import_contrato.insert_all(db, csv_file='data/contratos-2014.xls')
+
+    # Execucao
+    folder = '../gastos_abertos_dados/Orcamento/execucao/'
+    import_execucao.insert_all(db, folder=folder)
 
 
 if __name__ == "__main__":
