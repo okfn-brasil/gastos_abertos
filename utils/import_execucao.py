@@ -18,16 +18,8 @@ import pandas as pd
 from docopt import docopt
 from sqlalchemy.sql.expression import insert
 
-from gastosabertos import create_app
 from gastosabertos.execucao.models import Execucao
-from utils import ProgressCounter
-
-
-def get_db():
-    from gastosabertos.extensions import db
-    app = create_app()
-    db.app = app
-    return db
+from utils import ProgressCounter, get_db
 
 
 def insert_rows(db, rows_data):
@@ -36,7 +28,7 @@ def insert_rows(db, rows_data):
     db.session.commit()
 
 
-def insert_csv(csv, lines_per_insert=100):
+def insert_csv(csv, lines_per_insert):
     print(csv)
     table = pd.read_csv(csv)
     counter = ProgressCounter(len(table))
@@ -55,6 +47,8 @@ def insert_csv(csv, lines_per_insert=100):
     # check pk uniqueness
     if pks.duplicated().values.sum() > 0:
         print("Warning: There are duplicated pks!")
+    # add the pk series to the table
+    table = pd.concat([table, pks], axis=1)
     # ## --------------- ## #
 
     to_insert = []
@@ -75,21 +69,27 @@ def insert_csv(csv, lines_per_insert=100):
     counter.end()
 
 
+def insert_all(folder="../../gastos_abertos_dados/Orcamento/execucao/",
+               lines_per_insert=100):
+
+    csvs = sorted([i for i in os.listdir(folder) if i[-4:] == ".csv"])
+    for csv in csvs:
+        insert_csv(os.path.join(folder, csv), lines_per_insert)
+
+
 if __name__ == '__main__':
     db = get_db()
     Execucao.metadata.create_all(db.engine, checkfirst=True)
 
     arguments = docopt(__doc__)
     args = {}
+
     lines_per_insert = arguments['LINES_PER_INSERT']
     if lines_per_insert:
         args['lines_per_insert'] = int(lines_per_insert)
 
     folder = arguments['FOLDER']
-    if not folder:
-        folder = "../../gastos_abertos_dados/Orcamento/execucao/"
+    if folder:
+        args['folder'] = folder
 
-    csvs = sorted([i for i in os.listdir(folder) if i[-4:] == ".csv"])
-
-    for csv in csvs:
-        insert_csv(os.path.join(folder, csv), **args)
+    insert_all(**args)

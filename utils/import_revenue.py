@@ -9,7 +9,7 @@ Usage:
 Options:
     -h --help   Show this message.
 '''
-import sys
+
 from datetime import datetime, timedelta
 import calendar
 
@@ -17,16 +17,8 @@ from sqlalchemy.sql.expression import insert
 import pandas as pd
 from docopt import docopt
 
-from gastosabertos import create_app
 from gastosabertos.receita.models import Revenue, RevenueCode
-from utils import ProgressCounter
-
-
-def get_db():
-    from gastosabertos.extensions import db
-    app = create_app()
-    db.app = app
-    return db
+from utils import ProgressCounter, get_db
 
 
 def parse_money(money_string):

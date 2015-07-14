@@ -17,16 +17,8 @@ import calendar
 from sqlalchemy.sql.expression import insert
 from docopt import docopt
 
-from gastosabertos import create_app
 from gastosabertos.contratos.models import Contrato
-from utils import ProgressCounter
-
-
-def get_db():
-    from gastosabertos.extensions import db
-    app = create_app()
-    db.app = app
-    return db
+from utils import ProgressCounter, get_db
 
 
 def parse_money(money_string):
