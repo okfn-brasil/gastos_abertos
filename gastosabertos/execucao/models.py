@@ -12,10 +12,11 @@ class Execucao(db.Model):
     __tablename__ = 'execucao'
 
     id = Column(db.Integer, primary_key=True)
-    # code = Column(db.String(50), nullable=False)
     data = Column(postgresql.JSONB)
-    point = Column(Geometry('POINT'))
+    point = Column(Geometry('POINT'), default=None)
+    # If an attempt were made to gecode this row
     searched = Column(db.Boolean, default=False)
+    # code = Column(db.String(50), nullable=False)
 
     @staticmethod
     def get_region(point):
