@@ -16,3 +16,22 @@ class Execucao(db.Model):
     data = Column(postgresql.JSONB)
     point = Column(Geometry('POINT'))
     searched = Column(db.Boolean, default=False)
+
+    @staticmethod
+    def get_region(point):
+        """Returns the region of a point."""
+        pass
+
+
+class Regions(db.Model):
+
+    __tablename__ = 'regions'
+
+    id = Column(db.Integer, primary_key=True)
+    name = Column(db.String)
+    geo = Column(Geometry('POLYGON'))
+
+    @staticmethod
+    def get_points(region):
+        """Returns the points inside a region."""
+        pass
