@@ -20,7 +20,7 @@ class Execucao(db.Model):
     @staticmethod
     def get_region(point):
         """Returns the region of a point."""
-        pass
+        return Regions.query.filter(Regions.geo.ST_Contains(point))
 
 
 class Regions(db.Model):
@@ -34,4 +34,4 @@ class Regions(db.Model):
     @staticmethod
     def get_points(region):
         """Returns the points inside a region."""
-        pass
+        return Execucao.query.filter(Execucao.point.ST_Within(region))
