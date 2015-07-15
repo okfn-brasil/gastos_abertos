@@ -48,12 +48,14 @@ def geocode_all(db, data_folder="geocoder/data",
                 lat, lon, reg = geoent.best_coords()
                 if lat:
                     row.point = "POINT(%s %s)" % (lat, lon)
-                    to_be_inserted += 1
             row.searched = True
+            to_be_inserted += 1
             if to_be_inserted == lines_per_insert:
                 db.session.commit()
                 to_be_inserted = 0
             counter.update()
+        if to_be_inserted:
+            db.session.commit()
         counter.end()
 
 
