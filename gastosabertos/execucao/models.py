@@ -15,3 +15,4 @@ class Execucao(db.Model):
     # code = Column(db.String(50), nullable=False)
     data = Column(postgresql.JSONB)
     point = Column(Geometry('POINT'))
+    searched = Column(db.Boolean, default=False)

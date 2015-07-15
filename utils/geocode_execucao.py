@@ -12,7 +12,7 @@ Options:
 
 from __future__ import unicode_literals  # unicode by default
 
-import docopt
+from docopt import docopt
 
 from gastosabertos.execucao.models import Execucao
 from utils import ProgressCounter, get_db
@@ -37,7 +37,7 @@ def geocode_all(db, data_folder="geocoder/data",
     # The query bellow seems not very efficient...
     # Maybe change it as the link says.
     # https://stackoverflow.com/questions/7389759/memory-efficient-built-in-sqlalchemy-iterator-generator
-    non_geocoded = Execucao.query.filter(Execucao.point == None).all()
+    non_geocoded = Execucao.query.filter(Execucao.searched == False).all()
     with Geocoder(data_folder, terms_folder) as geocoder:
         counter = ProgressCounter(len(non_geocoded), print_abs=True)
         to_be_inserted = 0
@@ -49,16 +49,16 @@ def geocode_all(db, data_folder="geocoder/data",
                 if lat:
                     row.point = "POINT(%s %s)" % (lat, lon)
                     to_be_inserted += 1
-                    if to_be_inserted == lines_per_insert:
-                        db.session.commit()
-                        to_be_inserted = 0
+            row.searched = True
+            if to_be_inserted == lines_per_insert:
+                db.session.commit()
+                to_be_inserted = 0
             counter.update()
         counter.end()
 
 
 if __name__ == '__main__':
     db = get_db()
-    geocode_all(db)
 
     arguments = docopt(__doc__)
     args = {}
@@ -72,4 +72,4 @@ if __name__ == '__main__':
         if folder:
             args[arg.lower()] = folder
 
-    geocode_all(**args)
+    geocode_all(db, **args)
