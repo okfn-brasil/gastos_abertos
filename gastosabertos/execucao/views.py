@@ -9,6 +9,7 @@ from flask import Blueprint
 # from flask.ext.restful.utils import cors
 # from flask.ext.restful.reqparse import RequestParser
 from flask.ext.restplus import Resource
+# from sqlalchemy import Integer
 
 from .models import Execucao
 from gastosabertos.extensions import db, api
@@ -40,6 +41,22 @@ class ExecucaoInfoApi(Resource):
                 "years": years,
             }
         }
+
+
+@ns.route('/minlist/<int:year>')
+class ExecucaoMinListApi(Resource):
+
+    def get(self, year):
+        """Codes and latlons of all geolocated values in a year."""
+        items = (
+            db.session.query(Execucao.data['code'],
+                             Execucao.point.ST_X(),
+                             Execucao.point.ST_Y())
+            .filter(Execucao.data['cd_anoexecucao'].cast(db.Integer) == year)
+            .filter(Execucao.point != None)
+            .all())
+
+        return {"data": items}
 
 
 # execucao_api.add_resource(ExecucaoInfoApi, '/info')
