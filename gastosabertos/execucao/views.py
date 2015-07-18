@@ -41,6 +41,24 @@ class ExecucaoInfoApi(Resource):
         }
 
 
+@ns.route("/info/<year>")
+class ExecucaoInfoMappedApi(Resource):
+
+    def get(self, year):
+        q = db.session.query(Execucao).filter(Execucao.get_year() == year)
+        total = q.count()
+        mapped = q.filter(Execucao.point_found()).count()
+
+        return {
+            "data": {
+                "total": total,
+                "mapped": mapped,
+                # TODO: calcular regionalizados...
+                "region": mapped,
+            }
+        }
+
+
 @ns.route('/minlist/<int:year>')
 class ExecucaoMinListApi(Resource):
 
