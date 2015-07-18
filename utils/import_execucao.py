@@ -48,7 +48,7 @@ def insert_csv(csv, lines_per_insert):
     if pks.duplicated().values.sum() > 0:
         print("Warning: There are duplicated pks!")
     # add the pk series to the table
-    table = pd.concat([table, pks], axis=1)
+    # table = pd.concat([table, pks], axis=1)
     # ## --------------- ## #
 
     to_insert = []
@@ -61,8 +61,8 @@ def insert_csv(csv, lines_per_insert):
             # Progress counter
             counter.update(lines_per_insert)
 
-
-        to_insert.append({"data": dict(row.iterkv())})
+        to_insert.append({"code": pks.iloc[row_i],
+                          "data": dict(row.iterkv())})
 
     if len(to_insert) > 0:
         insert_rows(db, to_insert)
