@@ -41,8 +41,8 @@ def insert_csv(csv, lines_per_insert):
     # create table of codes
     code_table = pd.concat(code_series, axis=1)
     # create PK Series
-    pks = pd.Series(['.'.join([str(i) for i in i[1][1:]])
-                    for i in code_table.iterrows()],
+    pks = pd.Series(['.'.join([str(value) for value in row[1]])
+                    for row in code_table.iterrows()],
                     name="code")
     # check pk uniqueness
     if pks.duplicated().values.sum() > 0:
@@ -60,6 +60,7 @@ def insert_csv(csv, lines_per_insert):
             to_insert = []
             # Progress counter
             counter.update(lines_per_insert)
+
 
         to_insert.append({"data": dict(row.iterkv())})
 

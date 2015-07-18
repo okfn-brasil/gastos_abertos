@@ -34,9 +34,8 @@ def initdb():
 def importdata():
     """Import the data to the database"""
     from utils.import_revenue_codes import import_codes
-    from utils import import_revenue
-    from utils import import_contrato
-    from utils import import_execucao
+    from utils import (import_revenue, import_contrato,
+                       import_execucao, geocode_execucao)
 
     # Revenue
     import_codes(db)
@@ -49,6 +48,9 @@ def importdata():
     # Execucao
     folder = '../gastos_abertos_dados/Orcamento/execucao/'
     import_execucao.insert_all(db, folder=folder)
+    data_folder = 'utils/geocoder/data'
+    terms_folder = 'utils/geocoder/terms'
+    geocode_execucao.geocode_all(db, data_folder, terms_folder)
 
 
 if __name__ == "__main__":
