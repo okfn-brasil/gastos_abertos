@@ -92,7 +92,7 @@ parser.add_argument('page', type=int, default=0, help='Page doc!!!')
 parser.add_argument('per_page_num', type=int, default=100, help='PPN doc!!!')
 
 
-@ns.route('/list/')
+@ns.route('/list')
 # @api.doc(params={'id': 'An ID'})
 class ExecucaoAPI(Resource):
 
