@@ -47,7 +47,7 @@ def geocode_all(db, data_folder="geocoder/data",
             if geoent:
                 lat, lon, reg = geoent.best_coords()
                 if lat:
-                    row.point = "POINT(%s %s)" % (lat, lon)
+                    row.point = "POINT(%s %s)" % (lon, lat)
             row.searched = True
             to_be_inserted += 1
             if to_be_inserted == lines_per_insert:

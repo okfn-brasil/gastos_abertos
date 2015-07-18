@@ -3,6 +3,8 @@
 # from sqlalchemy import and_, extract, func
 # from datetime import datetime
 
+import json
+
 from flask import Blueprint
 # from flask.ext import restful
 # from flask.ext.restful import fields
@@ -19,10 +21,6 @@ execucao = Blueprint('execucao', __name__,
                      template_folder='templates',
                      static_folder='static',
                      static_url_path='/execucao/static')
-
-
-# Create the restful API
-# execucao_api = restful.Api(execucao, prefix="/api/v1/execucao")
 
 
 ns = api.namespace('execucao', 'Dados sobre execução')
@@ -50,13 +48,23 @@ class ExecucaoMinListApi(Resource):
         """Codes and latlons of all geolocated values in a year."""
         items = (
             db.session.query(Execucao.data['code'],
-                             Execucao.point.ST_X(),
-                             Execucao.point.ST_Y())
+                             Execucao.point.ST_AsGeoJSON(3))
             .filter(Execucao.data['cd_anoexecucao'].cast(db.Integer) == year)
             .filter(Execucao.point != None)
             .all())
 
-        return {"data": items}
+        return {
+            "data": [
+                {"type": "Feature",
+                 "properties": {"uid": uid},
+                 "geometry": json.loads(geo_str)}
+                for uid, geo_str in items
+            ]
+        }
 
 
+
+# Create the restful API
+# execucao_api = restful.Api(execucao, prefix="/api/v1/execucao")
 # execucao_api.add_resource(ExecucaoInfoApi, '/info')
+
