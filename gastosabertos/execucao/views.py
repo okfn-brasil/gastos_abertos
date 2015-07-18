@@ -11,6 +11,7 @@ from flask import Blueprint
 # from flask.ext.restful.utils import cors
 # from flask.ext.restful.reqparse import RequestParser
 from flask.ext.restplus import Resource
+# from flask.ext.restplus import Resource, marshal_with, fields
 # from sqlalchemy import Integer
 
 from .models import Execucao
@@ -30,13 +31,30 @@ ns = api.namespace('execucao', 'Dados sobre execução')
 class ExecucaoInfoApi(Resource):
 
     def get(self):
-        dbyears = db.session.query(
-            Execucao.data['cd_anoexecucao']).distinct().all()
+        dbyears = db.session.query(Execucao.get_year()).distinct().all()
         years = sorted([str(i[0]) for i in dbyears])
 
         return {
             "data": {
                 "years": years,
+            }
+        }
+
+
+@ns.route("/info/<year>")
+class ExecucaoInfoMappedApi(Resource):
+
+    def get(self, year):
+        q = db.session.query(Execucao).filter(Execucao.get_year() == year)
+        total = q.count()
+        mapped = q.filter(Execucao.point_found()).count()
+
+        return {
+            "data": {
+                "total": total,
+                "mapped": mapped,
+                # TODO: calcular regionalizados...
+                "region": mapped,
             }
         }
 
@@ -47,10 +65,9 @@ class ExecucaoMinListApi(Resource):
     def get(self, year):
         """Codes and latlons of all geolocated values in a year."""
         items = (
-            db.session.query(Execucao.data['code'],
-                             Execucao.point.ST_AsGeoJSON(3))
-            .filter(Execucao.data['cd_anoexecucao'].cast(db.Integer) == year)
-            .filter(Execucao.point != None)
+            db.session.query(Execucao.code, Execucao.point.ST_AsGeoJSON(3))
+            .filter(Execucao.get_year() == year)
+            .filter(Execucao.point_found())
             .all())
 
         return {
@@ -63,8 +80,60 @@ class ExecucaoMinListApi(Resource):
         }
 
 
+# execucao_fields = api.model('Todo', {
+    # 'sld_orcado_ano': fields.Float(required=True,
+    #                                description='The task details')
+# })
+
+parser = api.parser()
+parser.add_argument('code', type=str, help='Code doc!!!')
+parser.add_argument('year', type=int, help='Years doc!!!')
+parser.add_argument('page', type=int, default=0, help='Page doc!!!')
+parser.add_argument('per_page_num', type=int, default=100, help='PPN doc!!!')
+
+
+@ns.route('/list/')
+# @api.doc(params={'id': 'An ID'})
+class ExecucaoAPI(Resource):
+
+    @api.doc(parser=parser)
+    # @marshal_with(execucao_fields, envelope="data")
+    def get(self):
+        # Extract the argumnets in GET request
+        args = parser.parse_args()
+        page = args['page']
+        per_page_num = args['per_page_num']
+        year = args['year']
+        code = args['code']
+
+        execucao_data = db.session.query(Execucao)
+
+        # Get only row of 'code'
+        if code:
+            execucao_data = execucao_data.filter(Execucao.code == code)
+        # Get all rows of 'year'
+        elif year:
+            execucao_data = execucao_data.filter(Execucao.get_year() == year)
+
+        headers = {
+            # Add 'Access-Control-Expose-Headers' header here is a workaround
+            # until Flask-Restful adds support to it.
+            'Access-Control-Expose-Headers': 'X-Total-Count',
+            'X-Total-Count': execucao_data.count()
+        }
+
+        # Limit que number of results per page
+        execucao_data = (execucao_data.offset(page*per_page_num)
+                         ).limit(per_page_num)
+
+        return {"data": [
+            dict({
+                'code': i.code
+            }, **i.data)
+            for i in execucao_data.all()
+        ]}, 200, headers
+
 
 # Create the restful API
 # execucao_api = restful.Api(execucao, prefix="/api/v1/execucao")
 # execucao_api.add_resource(ExecucaoInfoApi, '/info')
-

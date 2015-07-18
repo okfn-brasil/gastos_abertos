@@ -11,12 +11,21 @@ class Execucao(db.Model):
 
     __tablename__ = 'execucao'
 
-    id = Column(db.Integer, primary_key=True)
+    # id = Column(db.Integer, primary_key=True)
+    code = Column(db.String(100), primary_key=True)
     data = Column(postgresql.JSONB)
     point = Column(Geometry('POINT'), default=None)
     # If an attempt were made to gecode this row
     searched = Column(db.Boolean, default=False)
     # code = Column(db.String(50), nullable=False)
+
+    @classmethod
+    def get_year(cls):
+        return cls.data['cd_anoexecucao'].cast(db.Integer)
+
+    @classmethod
+    def point_found(cls):
+        return cls.point != None
 
     @staticmethod
     def get_region(point):
