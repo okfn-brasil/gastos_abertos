@@ -62,14 +62,14 @@ class ExecucaoInfoMappedApi(Resource):
             "region": num_mapped,
         }
 
-        value = {}
-        fields = {
-            'orcado': 'sld_orcado_ano',
-            'atualizado': 'vl_atualizado',
-            'empenhado': 'vl_empenhadoliquido',
-            'liquidado': 'vl_liquidado'
-        }
-        for name, db_field in fields.items():
+        values = []
+        fields = [
+            ('orcado', 'sld_orcado_ano'),
+            ('atualizado', 'vl_atualizado'),
+            ('empenhado', 'vl_empenhadoliquido'),
+            ('liquidado', 'vl_liquidado')
+        ]
+        for name, db_field in fields:
             q = (db.session.query(
                 func.sum(Execucao.data[db_field].cast(db.Float)))
                 .filter(Execucao.get_year() == year))
@@ -78,15 +78,18 @@ class ExecucaoInfoMappedApi(Resource):
             mapped = q.filter(Execucao.point_found()).scalar()
             if mapped is None:
                 mapped = 0
-            value[name] = {
+            values.append({
+                "name": name,
                 "total": total,
                 "mapped": mapped,
-            }
+                # TODO: calcular regionalizados...
+                "region": mapped,
+            })
 
         return {
             "data": {
                 "rows": rows,
-                "value": value
+                "values": values
             }
         }
 
