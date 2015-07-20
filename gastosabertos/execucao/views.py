@@ -11,6 +11,7 @@ from flask import Blueprint
 # from flask.ext.restful.utils import cors
 # from flask.ext.restful.reqparse import RequestParser
 from flask.ext.restplus import Resource
+from sqlalchemy import func
 # from flask.ext.restplus import Resource, marshal_with, fields
 # from sqlalchemy import Integer
 
@@ -45,16 +46,43 @@ class ExecucaoInfoApi(Resource):
 class ExecucaoInfoMappedApi(Resource):
 
     def get(self, year):
-        q = db.session.query(Execucao).filter(Execucao.get_year() == year)
-        total = q.count()
-        mapped = q.filter(Execucao.point_found()).count()
+        # TODO: Passar tudo isso para uma tabela e evitar esse monte de
+        # queries?
+
+        q_total = db.session.query(Execucao).filter(
+            Execucao.get_year() == year)
+        num_total = q_total.count()
+        q_mapped = q_total.filter(Execucao.point_found())
+        num_mapped = q_mapped.count()
+
+        rows = {
+            "total": num_total,
+            "mapped": num_mapped,
+            # TODO: calcular regionalizados...
+            "region": num_mapped,
+        }
+
+        value = {}
+        fields = ['sld_orcado_ano', 'vl_atualizado',
+                  'vl_empenhadoliquido', 'vl_liquidado']
+        for field in fields:
+            q = (db.session.query(
+                func.sum(Execucao.data[field].cast(db.Float)))
+                .filter(Execucao.get_year() == year))
+
+            total = q.scalar()
+            mapped = q.filter(Execucao.point_found()).scalar()
+            if mapped is None:
+                mapped = 0
+            value[field] = {
+                "total": total,
+                "mapped": mapped,
+            }
 
         return {
             "data": {
-                "total": total,
-                "mapped": mapped,
-                # TODO: calcular regionalizados...
-                "region": mapped,
+                "rows": rows,
+                "value": value
             }
         }
 
@@ -92,7 +120,7 @@ parser.add_argument('page', type=int, default=0, help='Page doc!!!')
 parser.add_argument('per_page_num', type=int, default=100, help='PPN doc!!!')
 
 
-@ns.route('/list/')
+@ns.route('/list')
 # @api.doc(params={'id': 'An ID'})
 class ExecucaoAPI(Resource):
 

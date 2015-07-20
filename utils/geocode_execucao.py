@@ -31,7 +31,7 @@ def get_geolocable_cells(row):
 
 def geocode_all(db, data_folder="geocoder/data",
                 terms_folder="geocoder/terms",
-                lines_per_insert=100):
+                lines_per_insert=1000):
 
     print("Loading table...")
     # The query bellow seems not very efficient...
