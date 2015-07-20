@@ -63,18 +63,22 @@ class ExecucaoInfoMappedApi(Resource):
         }
 
         value = {}
-        fields = ['sld_orcado_ano', 'vl_atualizado',
-                  'vl_empenhadoliquido', 'vl_liquidado']
-        for field in fields:
+        fields = {
+            'orcado': 'sld_orcado_ano',
+            'atualizado': 'vl_atualizado',
+            'empenhado': 'vl_empenhadoliquido',
+            'liquidado': 'vl_liquidado'
+        }
+        for name, db_field in fields.items():
             q = (db.session.query(
-                func.sum(Execucao.data[field].cast(db.Float)))
+                func.sum(Execucao.data[db_field].cast(db.Float)))
                 .filter(Execucao.get_year() == year))
 
             total = q.scalar()
             mapped = q.filter(Execucao.point_found()).scalar()
             if mapped is None:
                 mapped = 0
-            value[field] = {
+            value[name] = {
                 "total": total,
                 "mapped": mapped,
             }
