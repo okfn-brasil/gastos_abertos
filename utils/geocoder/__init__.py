@@ -125,7 +125,17 @@ class Geocoder(object):
             term_geo = {}
             # query all servers
             for server_name, func in self.server_options.items():
-                points = func(s)
+                try:
+                    points = func(s)
+                except geopy.exc.GeocoderQuotaExceeded:
+                    print("Quota Exceeded!")
+                    raise
+                except (geopy.exc.GeocoderTimedOut,
+                        geopy.exc.GeocoderUnavailable):
+                    print("Timed out or unable to contact server!")
+                    print("Trying again...")
+                    points = func(s)
+
                 term_geo[server_name] = []
                 for point in points:
                     region = self.inside_limits(point)
