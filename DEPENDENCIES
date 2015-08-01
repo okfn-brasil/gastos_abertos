@@ -15,6 +15,10 @@ flask
 Seguir:
 https://wiki.archlinux.org/index.php/PostgreSQL#Installing_PostgreSQL
 para instalar e configurar BD; criar usuário e database nova.
+
+    CREATE USER postgres_user WITH PASSWORD 'password';
+    CREATE DATABASE my_postgres_db OWNER postgres_user;
+
 Adicione uma senha para o novo usuários:
 
 	ALTER USER gastosabertos with encrypted password '<senha>'

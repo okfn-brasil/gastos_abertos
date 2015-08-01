@@ -141,7 +141,9 @@ class ExecucaoAPI(Resource):
         year = args['year']
         code = args['code']
 
-        execucao_data = db.session.query(Execucao)
+        execucao_data = db.session.query(Execucao.point.ST_AsGeoJSON(3),
+                                         Execucao.code,
+                                         Execucao.data)
 
         # Get only row of 'code'
         if code:
@@ -163,7 +165,8 @@ class ExecucaoAPI(Resource):
 
         return {"data": [
             dict({
-                'code': i.code
+                "code": i.code,
+                "geometry": json.loads(i[0]),
             }, **i.data)
             for i in execucao_data.all()
         ]}, 200, headers
