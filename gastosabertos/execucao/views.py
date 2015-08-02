@@ -163,20 +163,13 @@ class ExecucaoAPI(Resource):
         execucao_data = (execucao_data.offset(page*per_page_num)
                          ).limit(per_page_num)
 
-        resp = []
-        for row in execucao_data.all():
-            element = dict({
-                "code": row.code,
-            }, **row.data)
-
-            if row[0]:
-                element["geometry"] = json.loads(row[0])
-            else:
-                element["geometry"] = False
-
-            resp.append(element)
-
-        return {"data": resp}, 200, headers
+        return {"data": [
+            dict({
+                "code": i.code,
+                "geometry": json.loads(i[0]) if i[0] else None,
+            }, **i.data)
+            for i in execucao_data.all()
+        ]}, 200, headers
 
 
 # Create the restful API
