@@ -32,20 +32,22 @@ ns = api.namespace('execucao', 'Dados sobre execução')
 class ExecucaoInfoApi(Resource):
 
     def get(self):
+        '''Information about all the database (currently only years).'''
         dbyears = db.session.query(Execucao.get_year()).distinct().all()
         years = sorted([str(i[0]) for i in dbyears])
 
         return {
-            "data": {
-                "years": years,
+            'data': {
+                'years': years,
             }
         }
 
 
-@ns.route("/info/<year>")
+@ns.route('/info/<year>')
 class ExecucaoInfoMappedApi(Resource):
 
     def get(self, year):
+        '''Information about a year.'''
         # TODO: Passar tudo isso para uma tabela e evitar esse monte de
         # queries?
 
@@ -56,10 +58,10 @@ class ExecucaoInfoMappedApi(Resource):
         num_mapped = q_mapped.count()
 
         rows = {
-            "total": num_total,
-            "mapped": num_mapped,
+            'total': num_total,
+            'mapped': num_mapped,
             # TODO: calcular regionalizados...
-            "region": num_mapped,
+            'region': num_mapped,
         }
 
         values = []
@@ -79,17 +81,17 @@ class ExecucaoInfoMappedApi(Resource):
             if mapped is None:
                 mapped = 0
             values.append({
-                "name": name,
-                "total": total,
-                "mapped": mapped,
+                'name': name,
+                'total': total,
+                'mapped': mapped,
                 # TODO: calcular regionalizados...
-                "region": mapped,
+                'region': mapped,
             })
 
         return {
-            "data": {
-                "rows": rows,
-                "values": values
+            'data': {
+                'rows': rows,
+                'values': values
             }
         }
 
@@ -97,20 +99,47 @@ class ExecucaoInfoMappedApi(Resource):
 @ns.route('/minlist/<int:year>')
 class ExecucaoMinListApi(Resource):
 
+    parser = api.parser()
+    parser.add_argument('state', type=bool, help='State or not state')
+    parser.add_argument('capcor', type=bool, help='Capital or Corrente')
+
     def get(self, year):
-        """Codes and latlons of all geolocated values in a year."""
+        '''Basic information about all geolocated values in a year.
+        This endpoint is usefull to plot all the points in a map and use the
+        codes to get more information about specific points. Using parameters
+        it is possible to get more information about all the points. Only codes
+        and latlons are returned by default.'''
+
+        args = self.parser.parse_args()
+        return_state = args['state']
+        return_cap_cor = args['capcor']
+
+        fields = filter(lambda i: i is not None, [
+            Execucao.code,
+            Execucao.point.ST_AsGeoJSON(3),
+            Execucao.state if return_state else None,
+            # Execucao.cap_cor if return_cap_cor else None,
+        ])
+
         items = (
-            db.session.query(Execucao.code, Execucao.point.ST_AsGeoJSON(3))
+            db.session.query(*fields)
             .filter(Execucao.get_year() == year)
             .filter(Execucao.point_found())
             .all())
 
+        # import IPython; IPython.embed()
+
         return {
-            "data": [
-                {"type": "Feature",
-                 "properties": {"uid": uid},
-                 "geometry": json.loads(geo_str)}
-                for uid, geo_str in items
+            'FeatureColletion': [
+                {'type': 'Feature',
+                 'properties': dict(filter(lambda i: i[1], (
+                     # Add required properties
+                     ('uid', v.code),
+                     ('state', v.state if return_state else None),
+                     ('cap_cor', v.cap_cor if return_cap_cor else None),
+                 ))),
+                 'geometry': json.loads(v[1])}
+                for v in items
             ]
         }
 
@@ -132,7 +161,7 @@ parser.add_argument('per_page_num', type=int, default=100, help='PPN doc!!!')
 class ExecucaoAPI(Resource):
 
     @api.doc(parser=parser)
-    # @marshal_with(execucao_fields, envelope="data")
+    # @marshal_with(execucao_fields, envelope='data')
     def get(self):
         # Extract the argumnets in GET request
         args = parser.parse_args()
@@ -163,22 +192,15 @@ class ExecucaoAPI(Resource):
         execucao_data = (execucao_data.offset(page*per_page_num)
                          ).limit(per_page_num)
 
-        resp = []
-        for row in execucao_data.all():
-            element = dict({
-                "code": row.code,
-            }, **row.data)
-
-            if row[0]:
-                element["geometry"] = json.loads(row[0])
-            else:
-                element["geometry"] = False
-
-            resp.append(element)
-
-        return {"data": resp}, 200, headers
+        return {'data': [
+            dict({
+                'code': i.code,
+                'geometry': json.loads(i[0]) if i[0] else None,
+            }, **i.data)
+            for i in execucao_data.all()
+        ]}, 200, headers
 
 
 # Create the restful API
-# execucao_api = restful.Api(execucao, prefix="/api/v1/execucao")
+# execucao_api = restful.Api(execucao, prefix='/api/v1/execucao')
 # execucao_api.add_resource(ExecucaoInfoApi, '/info')
