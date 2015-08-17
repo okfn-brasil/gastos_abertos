@@ -4,8 +4,10 @@
 ''' Read a CSV with execucao and insert it in the DB.
 
 Usage:
-    ./import_execucao [FOLDER] [LINES_PER_INSERT]
+    ./import_execucao [PATH] [LINES_PER_INSERT]
     ./import_execucao (-h | --help)
+
+PATH: Can be a CSV file or a folder. If it is a folder, insert all CSVs there.
 
 Options:
     -h --help   Show this message.
@@ -20,6 +22,17 @@ from sqlalchemy.sql.expression import insert
 
 from gastosabertos.execucao.models import Execucao
 from utils import ProgressCounter, get_db
+
+
+def identify_state(data):
+    if data['vl_liquidado']:
+        return 'liquidado'
+    elif data['vl_empenhadoliquido'] or data.get('vl_empenhado'):
+        return 'empenhado'
+    elif data['vl_atualizado']:
+        return 'atualizado'
+    else:
+        return 'orcado'
 
 
 def insert_rows(db, rows_data):
@@ -61,8 +74,13 @@ def insert_csv(csv, lines_per_insert):
             # Progress counter
             counter.update(lines_per_insert)
 
-        to_insert.append({"code": pks.iloc[row_i],
-                          "data": dict(row.iterkv())})
+        data = dict(row.iterkv())
+
+        to_insert.append({
+            "code": pks.iloc[row_i],
+            "data": data,
+            'state': identify_state(data),
+        })
 
     if len(to_insert) > 0:
         insert_rows(db, to_insert)
@@ -70,12 +88,16 @@ def insert_csv(csv, lines_per_insert):
     counter.end()
 
 
-def insert_all(folder="../../gastos_abertos_dados/Orcamento/execucao/",
+def insert_all(path="../../gastos_abertos_dados/Orcamento/execucao/",
                lines_per_insert=100):
 
-    csvs = sorted([i for i in os.listdir(folder) if i[-4:] == ".csv"])
-    for csv in csvs:
-        insert_csv(os.path.join(folder, csv), lines_per_insert)
+    if os.path.isdir(path):
+        csvs = sorted([i for i in os.listdir(path) if i[-4:] == ".csv"])
+        for csv in csvs:
+            insert_csv(os.path.join(path, csv), lines_per_insert)
+    else:
+        # If path is not a folder, it should be a CSV file
+        insert_csv(path, lines_per_insert)
 
 
 if __name__ == '__main__':
@@ -89,8 +111,8 @@ if __name__ == '__main__':
     if lines_per_insert:
         args['lines_per_insert'] = int(lines_per_insert)
 
-    folder = arguments['FOLDER']
-    if folder:
-        args['folder'] = folder
+    path = arguments['PATH']
+    if path:
+        args['path'] = path
 
     insert_all(**args)
