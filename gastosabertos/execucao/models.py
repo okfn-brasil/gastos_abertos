@@ -20,28 +20,13 @@ class Execucao(db.Model):
     # If an attempt were made to gecode this row
     searched = Column(db.Boolean, default=False)
 
-    # Current state of this expense:
-    # _states_names = {
-    #     0: 'orcado',
-    #     1: 'atualizado',
-    #     2: 'empenhado',
-    #     3: 'liquidado',
-    # }
-    # _states_nums = {v: k for k, v in _states_names.items()}
-    # state = Column(db.Integer, default=0)
     state = Column(db.Enum('orcado', 'atualizado', 'empenhado', 'liquidado',
                            name='expense_state'),
-                   default=0)
+                   default='orcado')
 
-    # def get_state(self):
-    #     return Execucao._states_names[self.state]
+    # If it is a 'capital' (4) or 'corrente' (3) expense
+    cap_cor = Column(db.Enum('capital', 'corrente', name='capcor'))
 
-    # def set_state(self, state_name):
-    #     self.state = Execucao._states_nums[state_name]
-
-    # @classmethod
-    # def get_num_state(cls, state_name):
-    #     return Execucao._states_nums[state_name]
 
     @classmethod
     def get_year(cls):
