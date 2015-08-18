@@ -63,12 +63,7 @@ def insert_rows(db, rows_data):
     db.session.commit()
 
 
-def insert_csv(csv, lines_per_insert):
-    print(csv)
-    table = pd.read_csv(csv)
-    counter = ProgressCounter(len(table))
-
-    # ## Add code column ## #
+def create_pks(table):
     code_series = [col for name, col in table.iteritems()
                    if name[:3].lower() == 'cd_']
     # this column doesn't start with 'cd_' but is a code
@@ -82,26 +77,34 @@ def insert_csv(csv, lines_per_insert):
     # check pk uniqueness
     if pks.duplicated().values.sum() > 0:
         print('Warning: There are duplicated pks!')
-    # ## --------------- ## #
+
+    return pks
+
+
+def prepare_row(code, row):
+    data = dict(row.iterkv())
+    return {
+        'code': code,
+        'data': data,
+        'state': identify_state(data),
+        'cap_cor': identify_capcor(data),
+    }
+
+
+def insert_csv(db, csv, lines_per_insert):
+    table = pd.read_csv(csv)
+    pks = create_pks(table)
+    # db = get_db()
+    counter = ProgressCounter(len(table))
 
     to_insert = []
-
     for row_i, row in table.iterrows():
-
         if len(to_insert) == lines_per_insert:
             insert_rows(db, to_insert)
             to_insert = []
             # Progress counter
             counter.update(lines_per_insert)
-
-        data = dict(row.iterkv())
-
-        to_insert.append({
-            'code': pks.iloc[row_i],
-            'data': data,
-            'state': identify_state(data),
-            'cap_cor': identify_capcor(data),
-        })
+        to_insert.append(prepare_row(pks.iloc[row_i], row))
 
     if len(to_insert) > 0:
         insert_rows(db, to_insert)
@@ -109,23 +112,48 @@ def insert_csv(csv, lines_per_insert):
     counter.end()
 
 
-def insert_all(path='../../gastos_abertos_dados/Orcamento/execucao/',
+def insert_all(db, path='../../gastos_abertos_dados/Orcamento/execucao/',
                lines_per_insert=100):
 
     if os.path.isdir(path):
         csvs = sorted([i for i in os.listdir(path) if i[-4:] == '.csv'])
         for csv in csvs:
-            insert_csv(os.path.join(path, csv), lines_per_insert)
+            print(csv)
+            insert_csv(db, os.path.join(path, csv), lines_per_insert)
     else:
         # If path is not a folder, it should be a CSV file
-        insert_csv(path, lines_per_insert)
+        insert_csv(db, path, lines_per_insert)
+
+
+def update_from_csv(db, csv):
+    '''Update table using values from CSV. Slower than 'insert_csv' but raises
+    no error if primary key already exists (just updates values).'''
+    table = pd.read_csv(csv)
+    pks = create_pks(table)
+    counter = ProgressCounter(len(table))
+    for row_i, row in table.iterrows():
+        code = pks.iloc[row_i]
+        row_model = db.session.query(Execucao).filter_by(code=code).first()
+        new_row = prepare_row(code, row)
+        if row_model:
+            for key, new_value in new_row.iteritems():
+                setattr(row_model, key, new_value)
+                # old_value = getattr(row_model, key)
+                # if old_value != new_value:
+                #     print(key, old_value, new_value)
+                #     setattr(row_model, key, new_value)
+        else:
+            db.session.add(Execucao(**new_row))
+        counter.update()
+    counter.end()
+    db.session.commit()
 
 
 if __name__ == '__main__':
     db = get_db()
 
     arguments = docopt(__doc__)
-    args = {}
+    args = {'db': db}
 
     if arguments['-D']:
         Execucao.metadata.drop_all(db.engine, checkfirst=True)
