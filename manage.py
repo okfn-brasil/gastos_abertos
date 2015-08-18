@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask.ext.script import Manager
+from flask.ext.script import Manager, Shell
 
 from gastosabertos.extensions import db
 from gastosabertos import create_app
@@ -8,6 +8,10 @@ from gastosabertos import create_app
 
 manager = Manager(create_app)
 manager.add_option('-i', '--inst', dest='instance_folder', required=False)
+manager.add_command('shell', Shell(make_context=lambda: {
+    'app': manager.app,
+    'db': db,
+}))
 
 
 @manager.command
