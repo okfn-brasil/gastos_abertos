@@ -14,6 +14,7 @@ from datetime import date
 
 from utils import get_db
 from import_execucao import update_from_csv
+from geocode_execucao import geocode_all
 # from import_execucao import insert_csv
 # ga_dados_path = os.path.join(*['/'] +
 #                              os.getcwd().split('/')[1:-2] +
@@ -45,6 +46,9 @@ else:
     newfilepath = os.path.join(storing_folder,
                                '{0}.{1}'.format(str(date.today()), 'csv'))
     shutil.move(csvfilepath, newfilepath)
-    update_from_csv(get_db(), newfilepath)
-    print('Atualizado.')
+    db = get_db()
+    update_from_csv(db, newfilepath)
+    print('Geocoding...')
+    geocode_all(db)
+    print('Done.')
     shutil.move(filepath, last_file)
