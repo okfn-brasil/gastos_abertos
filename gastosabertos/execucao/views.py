@@ -118,7 +118,7 @@ class ExecucaoMinListApi(Resource):
             Execucao.code,
             Execucao.point.ST_AsGeoJSON(3),
             Execucao.state if return_state else None,
-            # Execucao.cap_cor if return_cap_cor else None,
+            Execucao.cap_cor if return_cap_cor else None,
         ])
 
         items = (
