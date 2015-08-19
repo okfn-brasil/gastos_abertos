@@ -155,10 +155,15 @@ if __name__ == '__main__':
     arguments = docopt(__doc__)
     args = {'db': db}
 
-    if arguments['-D']:
-        Execucao.metadata.drop_all(db.engine, checkfirst=True)
+    tables = [Execucao.__table__]
 
-    Execucao.metadata.create_all(db.engine, checkfirst=True)
+    if arguments['-D']:
+        # Execucao.query.delete()
+        db.metadata.drop_all(db.engine, tables, checkfirst=True)
+        # Execucao.metadata.drop_all(db.engine, checkfirst=True)
+
+    db.metadata.create_all(db.engine, tables, checkfirst=True)
+    # Execucao.metadata.create_all(db.engine, checkfirst=True)
 
     lines_per_insert = arguments['LINES_PER_INSERT']
     if lines_per_insert:
