@@ -51,7 +51,7 @@ def importdata():
 
     # Execucao
     folder = '../gastos_abertos_dados/Orcamento/execucao/'
-    import_execucao.insert_all(db, folder=folder)
+    import_execucao.insert_all(db, path=folder)
     data_folder = 'utils/geocoder/data'
     terms_folder = 'utils/geocoder/terms'
     geocode_execucao.geocode_all(db, data_folder, terms_folder)
