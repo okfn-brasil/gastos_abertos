@@ -15,11 +15,13 @@ from datetime import date
 from utils import get_db
 from import_execucao import update_from_csv
 from geocode_execucao import geocode_all
+from generate_execucao_csv import generate_year
 # from import_execucao import insert_csv
 # ga_dados_path = os.path.join(*['/'] +
 #                              os.getcwd().split('/')[1:-2] +
 #                              ['gastos_abertos_dados'])
 ga_dados_path = os.path.join('..', '..', 'gastos_abertos_dados')
+public_downloads = os.path.join('..', '..', 'public-downloads', 'execucao')
 sys.path.append(os.path.join(ga_dados_path, 'utils'))
 from execucao_downloader import download_year, convert_to_csv
 
@@ -50,5 +52,7 @@ else:
     update_from_csv(db, newfilepath)
     print('Geocoding...')
     geocode_all(db)
+    print('Generating CSV...')
+    generate_year(db, current_year, public_downloads)
     print('Done.')
     shutil.move(filepath, last_file)
