@@ -11,16 +11,18 @@ PATH: Can be a CSV file or a folder. If it is a folder, insert all CSVs there.
 Options:
     -h --help   Show this message.
     -D          Drop table.
+    -u          Allows update instead of only inserts.
 '''
 
 from __future__ import unicode_literals  # unicode by default
 import os
+import datetime
 
 import pandas as pd
 from docopt import docopt
 from sqlalchemy.sql.expression import insert
 
-from gastosabertos.execucao.models import Execucao
+from gastosabertos.execucao.models import Execucao, History
 from utils import ProgressCounter, get_db
 
 
@@ -113,16 +115,22 @@ def insert_csv(db, csv, lines_per_insert):
 
 
 def insert_all(db, path='../../gastos_abertos_dados/Orcamento/execucao/',
-               lines_per_insert=100):
+               lines_per_insert=100, update=False):
 
     if os.path.isdir(path):
         csvs = sorted([i for i in os.listdir(path) if i[-4:] == '.csv'])
         for csv in csvs:
             print(csv)
-            insert_csv(db, os.path.join(path, csv), lines_per_insert)
+            if update:
+                update_from_csv(db, os.path.join(path, csv))
+            else:
+                insert_csv(db, os.path.join(path, csv), lines_per_insert)
     else:
         # If path is not a folder, it should be a CSV file
-        insert_csv(db, path, lines_per_insert)
+        if update:
+            update_from_csv(db, path)
+        else:
+            insert_csv(db, path, lines_per_insert)
 
 
 def update_from_csv(db, csv):
@@ -131,29 +139,62 @@ def update_from_csv(db, csv):
     table = pd.read_csv(csv)
     pks = create_pks(table)
     counter = ProgressCounter(len(table))
+    modified_counter = 0
+    added_counter = 0
+
     for row_i, row in table.iterrows():
         code = pks.iloc[row_i]
         row_model = db.session.query(Execucao).filter_by(code=code).first()
         new_row = prepare_row(code, row)
+        date = datetime.datetime.strptime(
+            new_row['data']['datafinal'], '%Y-%m-%d')
         if row_model:
-            for key, new_value in new_row.iteritems():
-                setattr(row_model, key, new_value)
-                # old_value = getattr(row_model, key)
-                # if old_value != new_value:
-                #     print(key, old_value, new_value)
-                #     setattr(row_model, key, new_value)
+            modified = {}
+
+            # Check if state was modified
+            if row_model.state != new_row['state'].decode('utf8'):
+                modified['state'] = (row_model.state, new_row['state'])
+                row_model.state = new_row['state']
+
+            # Check if a field in data was modified
+            for key, new_value in new_row['data'].items():
+                old_value = row_model.data[key]
+
+                # Avoids confusion caused by new_value not been unicode
+                if type(new_value) is str:
+                    new_value = new_value.decode('utf8')
+                    new_row['data'][key] = new_value
+
+                if old_value != new_value:
+                    modified[key] = (old_value, new_value)
+
+            # Avoids registering row as modified if only datafinal changend
+            if len(modified) == 1 and 'datafinal' in modified:
+                modified = {}
+
+            if modified:
+                db.session.add(
+                    History(event='modified', code=code,
+                            date=date, data=modified))
+                row_model.data = new_row['data']
+                modified_counter += 1
         else:
+            db.session.add(History(event='created', code=code,
+                                   date=date, data=new_row))
             db.session.add(Execucao(**new_row))
+            added_counter += 1
         counter.update()
     counter.end()
     db.session.commit()
+    print('Added/Modified/Total: %s/%s/%s' %
+          (added_counter, modified_counter, len(table)))
 
 
 if __name__ == '__main__':
     db = get_db()
 
     arguments = docopt(__doc__)
-    args = {'db': db}
+    args = {'db': db, 'update': arguments['-u']}
 
     tables = [Execucao.__table__]
 
