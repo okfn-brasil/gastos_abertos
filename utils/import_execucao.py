@@ -196,7 +196,7 @@ if __name__ == '__main__':
     arguments = docopt(__doc__)
     args = {'db': db, 'update': arguments['-u']}
 
-    tables = [Execucao.__table__]
+    tables = [Execucao.__table__, History.__table__]
 
     if arguments['-D']:
         # Execucao.query.delete()
