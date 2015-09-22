@@ -11,11 +11,11 @@ from flask import Blueprint
 # from flask.ext.restful.utils import cors
 # from flask.ext.restful.reqparse import RequestParser
 from flask.ext.restplus import Resource
-from sqlalchemy import func
+from sqlalchemy import func, desc
 # from flask.ext.restplus import Resource, marshal_with, fields
 # from sqlalchemy import Integer
 
-from .models import Execucao
+from .models import Execucao, History
 from gastosabertos.extensions import db, api
 
 # Blueprint for Execucao
@@ -26,6 +26,42 @@ execucao = Blueprint('execucao', __name__,
 
 
 ns = api.namespace('execucao', 'Dados sobre execução')
+
+
+arguments = {
+    'code': {
+        'type': str,
+        'help': 'Code doc!!',
+    },
+    'year': {
+        'type': int,
+        'help': 'Years doc!!!',
+    },
+    'page': {
+        'type': int,
+        'default': 0,
+        'help': 'Page doc!!',
+    },
+    'per_page_num': {
+        'type': int,
+        'default': 100,
+        'help': 'PPN doc!!',
+    },
+    'has_key': {
+        'type': str,
+        'help': 'Field that must have been modified.',
+    },
+}
+
+
+def create_parser(*args):
+    '''Create a parser for the passed arguments.'''
+    parser = api.parser()
+    for arg in args:
+        parser.add_argument(arg, **arguments[arg])
+    return parser
+
+general_parser = create_parser(*arguments)
 
 
 @ns.route('/info')
@@ -181,13 +217,6 @@ class ExecucaoAPI(Resource):
         elif year:
             execucao_data = execucao_data.filter(Execucao.get_year() == year)
 
-        headers = {
-            # Add 'Access-Control-Expose-Headers' header here is a workaround
-            # until Flask-Restful adds support to it.
-            'Access-Control-Expose-Headers': 'X-Total-Count',
-            'X-Total-Count': execucao_data.count()
-        }
-
         # Limit que number of results per page
         execucao_data = (execucao_data.offset(page*per_page_num)
                          ).limit(per_page_num)
@@ -198,9 +227,47 @@ class ExecucaoAPI(Resource):
                 'geometry': json.loads(i[0]) if i[0] else None,
             }, **i.data)
             for i in execucao_data.all()
-        ]}, 200, headers
+        ]}, 200, headers_with_counter(execucao_data.count())
 
 
-# Create the restful API
-# execucao_api = restful.Api(execucao, prefix='/api/v1/execucao')
-# execucao_api.add_resource(ExecucaoInfoApi, '/info')
+@ns.route('/updates')
+class ExecucaoUpdates(Resource):
+
+    @api.doc(parser=create_parser('page', 'per_page_num', 'has_key'))
+    def get(self):
+        '''Rows updates.'''
+        args = general_parser.parse_args()
+        page = args['page']
+        per_page_num = args['per_page_num']
+        has_key = args['has_key']
+
+        fields = (History, Execucao.data['ds_projeto_atividade'])
+        updates_data = (db.session.query(*fields)
+                        .order_by(desc(History.date))
+                        .filter(Execucao.code == History.code))
+
+        if has_key:
+            updates_data = updates_data.filter(History.data.has_key(has_key))
+
+        # Limit que number of results per page
+        updates_data = (updates_data.offset(page*per_page_num)
+                        ).limit(per_page_num)
+
+        return {
+            'data': [{
+                'date': hist.date.strftime('%Y-%m-%d'),
+                'event': hist.event,
+                'code': hist.code,
+                'description': descr,
+                'data': hist.data
+            } for hist, descr in updates_data.all()]
+        }, 200, headers_with_counter(updates_data.count())
+
+
+def headers_with_counter(total):
+    return {
+        # Add 'Access-Control-Expose-Headers' header here is a workaround
+        # until Flask-Restful adds support to it.
+        'Access-Control-Expose-Headers': 'X-Total-Count',
+        'X-Total-Count': total
+    }

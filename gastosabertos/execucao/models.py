@@ -27,7 +27,6 @@ class Execucao(db.Model):
     # If it is a 'capital' (4) or 'corrente' (3) expense
     cap_cor = Column(db.Enum('capital', 'corrente', name='capcor'))
 
-
     @classmethod
     def get_year(cls):
         return cls.data['cd_anoexecucao'].cast(db.Integer)
@@ -54,3 +53,14 @@ class Regions(db.Model):
     def get_points(region):
         """Returns the points inside a region."""
         return Execucao.query.filter(Execucao.point.ST_Within(region))
+
+
+class History(db.Model):
+
+    __tablename__ = 'execucao_history'
+
+    id = Column(db.Integer, primary_key=True)
+    code = Column(db.String(100))
+    event = Column(db.String(20))
+    date = db.Column(db.DateTime, nullable=False)
+    data = Column(postgresql.JSONB)
