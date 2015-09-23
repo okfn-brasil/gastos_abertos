@@ -159,14 +159,15 @@ def update_from_csv(db, csv):
 
             # Check if a field in data was modified
             for key, new_value in new_row['data'].items():
-                old_value = row_model.data[key]
+                old_value = row_model.data.get(key)
 
                 # Avoids confusion caused by new_value not been unicode
                 if type(new_value) is str:
                     new_value = new_value.decode('utf8')
                     new_row['data'][key] = new_value
 
-                if old_value != new_value:
+                # Avoids data that changed from 0 to None
+                if (old_value or new_value) and (old_value != new_value):
                     modified[key] = (old_value, new_value)
 
             # Avoids registering row as modified if only datafinal changend
