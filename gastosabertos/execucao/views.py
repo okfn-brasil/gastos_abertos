@@ -172,6 +172,8 @@ class ExecucaoAPI(Resource):
         elif year:
             execucao_data = execucao_data.filter(Execucao.get_year() == year)
 
+        total = execucao_data.count()
+
         # Limit que number of results per page
         execucao_data = (execucao_data.offset(page*per_page_num)
                          ).limit(per_page_num)
@@ -182,7 +184,7 @@ class ExecucaoAPI(Resource):
                 'geometry': json.loads(i[0]) if i[0] else None,
             }, **i.data)
             for i in execucao_data.all()
-        ]}, 200, headers_with_counter(execucao_data.count())
+        ]}, 200, headers_with_counter(total)
 
 
 @ns.route('/updates')
@@ -204,6 +206,8 @@ class ExecucaoUpdates(Resource):
         if has_key:
             updates_data = updates_data.filter(History.data.has_key(has_key))
 
+        total = updates_data.count()
+
         # Limit que number of results per page
         updates_data = (updates_data.offset(page*per_page_num)
                         ).limit(per_page_num)
@@ -216,7 +220,7 @@ class ExecucaoUpdates(Resource):
                 'description': descr,
                 'data': hist.data
             } for hist, descr in updates_data.all()]
-        }, 200, headers_with_counter(updates_data.count())
+        }, 200, headers_with_counter(total)
 
 
 def headers_with_counter(total):
