@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+''' This script updates the table with metadata about each execucao year.
+No arguments required.
+
+Usage:
+    ./update_execucao_year_info [options]
+
+Options:
+    -h --help   Show this message.
+'''
 from sqlalchemy import func
+from docopt import docopt
 
 from gastosabertos.execucao.models import Execucao, ExecucaoYearInfo
 from utils import get_db
@@ -78,6 +88,7 @@ def update_all_years_info(db):
 
 if __name__ == '__main__':
     db = get_db()
+    arguments = docopt(__doc__)
     tables = [ExecucaoYearInfo.__table__]
     try:
         db.metadata.drop_all(db.engine, tables, checkfirst=True)
