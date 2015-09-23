@@ -24,6 +24,7 @@ from sqlalchemy.sql.expression import insert
 
 from gastosabertos.execucao.models import Execucao, History
 from utils import ProgressCounter, get_db
+from update_execucao_year_info import update_all_years_info
 
 
 def identify_state(data):
@@ -176,8 +177,10 @@ def update_from_csv(db, csv):
                 db.session.add(
                     History(event='modified', code=code,
                             date=date, data=modified))
-                row_model.data = new_row['data']
                 modified_counter += 1
+
+            # Updates DB data even if only 'datafinal' changed
+            row_model.data = new_row['data']
         else:
             db.session.add(History(event='created', code=code,
                                    date=date, data=new_row))
@@ -215,3 +218,4 @@ if __name__ == '__main__':
         args['path'] = path
 
     insert_all(**args)
+    update_all_years_info(db)

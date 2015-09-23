@@ -11,11 +11,11 @@ from flask import Blueprint
 # from flask.ext.restful.utils import cors
 # from flask.ext.restful.reqparse import RequestParser
 from flask.ext.restplus import Resource
-from sqlalchemy import func, desc
+from sqlalchemy import desc
 # from flask.ext.restplus import Resource, marshal_with, fields
 # from sqlalchemy import Integer
 
-from .models import Execucao, History
+from .models import Execucao, History, ExecucaoYearInfo
 from gastosabertos.extensions import db, api
 
 # Blueprint for Execucao
@@ -79,56 +79,13 @@ class ExecucaoInfoApi(Resource):
         }
 
 
-@ns.route('/info/<year>')
+@ns.route('/info/<int:year>')
 class ExecucaoInfoMappedApi(Resource):
 
     def get(self, year):
         '''Information about a year.'''
-        # TODO: Passar tudo isso para uma tabela e evitar esse monte de
-        # queries?
-
-        q_total = db.session.query(Execucao).filter(
-            Execucao.get_year() == year)
-        num_total = q_total.count()
-        q_mapped = q_total.filter(Execucao.point_found())
-        num_mapped = q_mapped.count()
-
-        rows = {
-            'total': num_total,
-            'mapped': num_mapped,
-            # TODO: calcular regionalizados...
-            'region': num_mapped,
-        }
-
-        values = []
-        fields = [
-            ('orcado', 'sld_orcado_ano'),
-            ('atualizado', 'vl_atualizado'),
-            ('empenhado', 'vl_empenhadoliquido'),
-            ('liquidado', 'vl_liquidado')
-        ]
-        for name, db_field in fields:
-            q = (db.session.query(
-                func.sum(Execucao.data[db_field].cast(db.Float)))
-                .filter(Execucao.get_year() == year))
-
-            total = q.scalar()
-            mapped = q.filter(Execucao.point_found()).scalar()
-            if mapped is None:
-                mapped = 0
-            values.append({
-                'name': name,
-                'total': total,
-                'mapped': mapped,
-                # TODO: calcular regionalizados...
-                'region': mapped,
-            })
-
         return {
-            'data': {
-                'rows': rows,
-                'values': values
-            }
+            'data': db.session.query(ExecucaoYearInfo).get(year).data
         }
 
 

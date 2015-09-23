@@ -39,7 +39,8 @@ def importdata():
     """Import the data to the database"""
     from utils.import_revenue_codes import import_codes
     from utils import (import_revenue, import_contrato,
-                       import_execucao, geocode_execucao)
+                       import_execucao, geocode_execucao,
+                       update_execucao_year_info)
 
     # Revenue
     import_codes(db)
@@ -55,6 +56,7 @@ def importdata():
     data_folder = 'utils/geocoder/data'
     terms_folder = 'utils/geocoder/terms'
     geocode_execucao.geocode_all(db, data_folder, terms_folder)
+    update_execucao_year_info.update_all_years_info(db)
 
 
 if __name__ == "__main__":

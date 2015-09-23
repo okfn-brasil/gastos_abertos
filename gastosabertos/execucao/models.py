@@ -64,3 +64,11 @@ class History(db.Model):
     event = Column(db.String(20))
     date = db.Column(db.DateTime, nullable=False)
     data = Column(postgresql.JSONB)
+
+
+class ExecucaoYearInfo(db.Model):
+
+    __tablename__ = 'execucao_year_info'
+
+    year = Column(db.Integer, primary_key=True)
+    data = Column(postgresql.JSONB)
