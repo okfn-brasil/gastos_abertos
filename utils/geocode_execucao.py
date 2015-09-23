@@ -17,6 +17,7 @@ from docopt import docopt
 from gastosabertos.execucao.models import Execucao
 from utils import ProgressCounter, get_db
 from geocoder import Geocoder
+from update_execucao_year_info import update_all_years_info
 
 
 TYPE_STR = type("")
@@ -75,3 +76,4 @@ if __name__ == '__main__':
             args[arg.lower()] = folder
 
     geocode_all(db, **args)
+    update_all_years_info(db)

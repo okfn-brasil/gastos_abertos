@@ -14,6 +14,7 @@ from datetime import date
 
 from utils import get_db
 from import_execucao import update_from_csv
+from update_execucao_year_info import update_all_years_info
 from geocode_execucao import geocode_all
 from generate_execucao_csv import generate_year
 # from import_execucao import insert_csv
@@ -52,6 +53,7 @@ else:
     update_from_csv(db, newfilepath)
     print('Geocoding...')
     geocode_all(db)
+    update_all_years_info(db)
     print('Generating CSV...')
     generate_year(db, current_year, public_downloads)
     print('Done.')
