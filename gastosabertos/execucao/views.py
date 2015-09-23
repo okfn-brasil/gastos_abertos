@@ -84,9 +84,7 @@ class ExecucaoInfoMappedApi(Resource):
 
     def get(self, year):
         '''Information about a year.'''
-        return {
-            'data': db.session.query(ExecucaoYearInfo).get(year).data
-        }
+        return db.session.query(ExecucaoYearInfo).get(year).data
 
 
 @ns.route('/minlist/<int:year>')
