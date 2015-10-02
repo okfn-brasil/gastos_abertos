@@ -23,7 +23,7 @@ setup(
         'Flask-Testing',
         'Flask-Restful',
         'Flask-Paginate',
-        'Flask-CORS',
+        'Flask-CORS>=2.0.1',
         'Flask-Restplus',
         'geoalchemy2',
         'fabric',
