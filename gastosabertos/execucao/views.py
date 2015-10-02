@@ -3,6 +3,7 @@
 # from sqlalchemy import and_, extract, func
 # from datetime import datetime
 
+from __future__ import unicode_literals  # unicode by default
 import json
 
 from flask import Blueprint
@@ -27,25 +28,30 @@ execucao = Blueprint('execucao', __name__,
 
 ns = api.namespace('execucao', 'Dados sobre execução')
 
-
 arguments = {
     'code': {
         'type': str,
-        'help': 'Code doc!!',
+        'help': 'Code.',
+    },
+    'codes': {
+        'type': list,
+        'location': 'json',
+        'default': None,
+        'help': 'List of codes.',
     },
     'year': {
         'type': int,
-        'help': 'Years doc!!!',
+        'help': 'Year.',
     },
     'page': {
         'type': int,
         'default': 0,
-        'help': 'Page doc!!',
+        'help': 'Page.',
     },
     'per_page_num': {
         'type': int,
         'default': 100,
-        'help': 'PPN doc!!',
+        'help': 'Number of elements per page.',
     },
     'has_key': {
         'type': str,
@@ -140,30 +146,21 @@ class ExecucaoMinListApi(Resource):
     #                                description='The task details')
 # })
 
-parser = api.parser()
-parser.add_argument('code', type=str, help='Code doc!!!')
-parser.add_argument('year', type=int, help='Years doc!!!')
-parser.add_argument('page', type=int, default=0, help='Page doc!!!')
-parser.add_argument('per_page_num', type=int, default=100, help='PPN doc!!!')
-
 
 @ns.route('/list')
 # @api.doc(params={'id': 'An ID'})
 class ExecucaoAPI(Resource):
 
-    @api.doc(parser=parser)
-    # @marshal_with(execucao_fields, envelope='data')
+    @api.doc(parser=create_parser('code', 'year', 'page', 'per_page_num'))
     def get(self):
-        # Extract the argumnets in GET request
-        args = parser.parse_args()
+        '''List execução data in pages.'''
+        args = general_parser.parse_args()
+        code = args['code']
         page = args['page']
         per_page_num = args['per_page_num']
         year = args['year']
-        code = args['code']
 
-        execucao_data = db.session.query(Execucao.point.ST_AsGeoJSON(3),
-                                         Execucao.code,
-                                         Execucao.data)
+        execucao_data = query_execucao()
 
         # Get only row of 'code'
         if code:
@@ -178,13 +175,22 @@ class ExecucaoAPI(Resource):
         execucao_data = (execucao_data.offset(page*per_page_num)
                          ).limit(per_page_num)
 
-        return {'data': [
-            dict({
-                'code': i.code,
-                'geometry': json.loads(i[0]) if i[0] else None,
-            }, **i.data)
-            for i in execucao_data.all()
-        ]}, 200, headers_with_counter(total)
+        return data2json(execucao_data.all()), 200, headers_with_counter(total)
+
+    @api.doc(parser=create_parser('codes'))
+    def post(self):
+        '''Return information about a given list of codes.'''
+        args = general_parser.parse_args()
+        codes = args['codes']
+        print('UHU', codes)
+        if codes:
+            execucao_data = (query_execucao()
+                             .filter(Execucao.code.in_(codes))
+                             .all())
+        else:
+            execucao_data = []
+        return data2json(execucao_data)
+
 
 
 @ns.route('/updates')
@@ -230,3 +236,20 @@ def headers_with_counter(total):
         'Access-Control-Expose-Headers': 'X-Total-Count',
         'X-Total-Count': total
     }
+
+
+def query_execucao():
+    return db.session.query(
+        Execucao.point.ST_AsGeoJSON(3),
+        Execucao.code,
+        Execucao.data)
+
+
+def data2json(rows):
+    return {'data': [
+        dict({
+            'code': i.code,
+            'geometry': json.loads(i[0]) if i[0] else None,
+        }, **i.data)
+        for i in rows
+    ]}
