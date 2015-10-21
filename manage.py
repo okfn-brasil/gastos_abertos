@@ -15,9 +15,10 @@ manager.add_command('shell', Shell(make_context=lambda: {
 
 
 @manager.command
-def run():
+@manager.option('-h', '--host', help='Host')
+def run(host='127.0.0.1'):
     """Run in local machine."""
-    manager.app.run()
+    manager.app.run(host=host)
 
 
 @manager.command

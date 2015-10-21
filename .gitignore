@@ -56,3 +56,6 @@ target/
 
 *swp
 *swo
+
+settings/local_settings.py
+*.db
