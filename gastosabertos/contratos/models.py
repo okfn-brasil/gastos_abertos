@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from sqlalchemy import Column, types
+#import locale
 
-from ..extensions import db
-
-import locale
+from ..models import db, Column, Model
 
 #try:
 #    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 #except:
 #    pass
 
-class Contrato(db.Model):
+
+class Contrato(Model):
 
     __tablename__ = 'contratos'
 
@@ -35,7 +34,10 @@ class Contrato(db.Model):
     @property
     def fvalor(self):
         #return locale.currency(self.valor, grouping=True)
-        return '{:,.2f}'.format(self.valor).replace('.', 't').replace(',', '.').replace('t', ',')
+        return '{:,.2f}'.format(self.valor
+                                ).replace('.', 't'
+                                          ).replace(',', '.'
+                                                    ).replace('t', ',')
 
     @property
     def fdata_assinatura(self):

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os
-import json
-from sqlalchemy import and_, extract, func, desc
-from datetime import datetime
+from sqlalchemy import func, desc
 from jinja2 import TemplateNotFound
 
-from flask import Blueprint, render_template, send_from_directory, abort, request
+from flask import Blueprint, render_template, abort, request
 from flask.ext.paginate import Pagination
 from flask.ext import restful
 from flask.ext.restful import fields
@@ -17,9 +14,9 @@ from gastosabertos.extensions import db
 
 # Blueprint for Contrato
 contratos = Blueprint('contratos', __name__,
-                    template_folder='templates',
-                    static_folder='static',
-                    static_url_path='/contrato/static')
+                      template_folder='templates',
+                      static_folder='static',
+                      static_url_path='/contrato/static')
 
 
 # Create the restful API
@@ -46,19 +43,20 @@ contratos_list_parser.add_argument('page', type=int, default=0)
 contratos_list_parser.add_argument('per_page_num', type=int, default=100)
 
 # Fields for ContratoAPI data marshal
-contratos_fields = { 'id': fields.Integer()
-                   , 'orgao': fields.String()
-                   , 'data_assinatura': fields.DateTime(dt_format='iso8601')
-                   , 'vigencia': fields.Integer()
-                   , 'objeto': fields.String()
-                   , 'modalidade': fields.String()
-                   , 'evento': fields.String()
-                   , 'processo_administrativo': fields.String()
-                   , 'cnpj': fields.String()
-                   , 'nome_fornecedor': fields.String()
-                   , 'valor': fields.Float()
-                   , 'licitacao': fields.String()
-                   , 'data_publicacao': fields.DateTime(dt_format='iso8601') }
+contratos_fields = {'id': fields.Integer(),
+                    'orgao': fields.String(),
+                    'data_assinatura': fields.DateTime(dt_format='iso8601'),
+                    'vigencia': fields.Integer(),
+                    'objeto': fields.String(),
+                    'modalidade': fields.String(),
+                    'evento': fields.String(),
+                    'processo_administrativo': fields.String(),
+                    'cnpj': fields.String(),
+                    'nome_fornecedor': fields.String(),
+                    'valor': fields.Float(),
+                    'licitacao': fields.String(),
+                    'data_publicacao': fields.DateTime(dt_format='iso8601'),
+                    }
 
 
 class ContratoApi(restful.Resource):
@@ -82,34 +80,44 @@ class ContratoApi(restful.Resource):
 
         if nome_fornecedor:
             nome_query = '%{}%'.format(nome_fornecedor)
-            contratos_data = contratos_data.filter(Contrato.nome_fornecedor.ilike(nome_query))
+            contratos_data = contratos_data.filter(
+                Contrato.nome_fornecedor.ilike(nome_query))
 
         if orgao:
             orgao_query = '%{}%'.format(orgao)
-            contratos_data = contratos_data.filter(Contrato.orgao.ilike(orgao_query))
+            contratos_data = contratos_data.filter(
+                Contrato.orgao.ilike(orgao_query))
 
         if modalidade:
             modalidade_query = '%{}%'.format(modalidade)
-            contratos_data = contratos_data.filter(Contrato.modalidade.ilike(modalidade_query))
+            contratos_data = contratos_data.filter(
+                Contrato.modalidade.ilike(modalidade_query))
 
         if evento:
             evento_query = '%{}%'.format(evento)
-            contratos_data = contratos_data.filter(Contrato.evento.ilike(evento_query))
+            contratos_data = contratos_data.filter(
+                Contrato.evento.ilike(evento_query))
 
         if objeto:
             objeto_query = '%{}%'.format(objeto)
-            contratos_data = contratos_data.filter(Contrato.objeto.ilike(objeto_query))
+            contratos_data = contratos_data.filter(
+                Contrato.objeto.ilike(objeto_query))
 
         if processo_administrativo:
-            processo_administrativo_query = '%{}%'.format(processo_administrativo)
-            contratos_data = contratos_data.filter(Contrato.processo_administrativo.ilike(processo_administrativo_query))
+            processo_administrativo_query = '%{}%'.format(
+                rocesso_administrativo)
+            contratos_data = contratos_data.filter(
+                Contrato.processo_administrativo.ilike(
+                    processo_administrativo_query))
 
         if licitacao:
             licitacao_query = '%{}%'.format(licitacao)
-            contratos_data = contratos_data.filter(Contrato.licitacao.ilike(licitacao_query))
+            contratos_data = contratos_data.filter(
+                Contrato.licitacao.ilike(licitacao_query))
 
         # Limit que number of results per page
-        contratos_data = contratos_data.offset(page*per_page_num).limit(per_page_num)
+        contratos_data = contratos_data.offset(
+            page*per_page_num).limit(per_page_num)
 
         return contratos_data
 
@@ -140,6 +148,8 @@ class ContratoListApi(ContratoApi):
     def get(self):
         contratos_data = db.session.query(Contrato)
 
+        total_count = contratos_data.count()
+
         contratos_data = self.order(contratos_data)
         contratos_data = self.filter(contratos_data)
 
@@ -147,7 +157,7 @@ class ContratoListApi(ContratoApi):
             # Add 'Access-Control-Expose-Headers' header here is a workaround
             # until Flask-Restful adds support to it.
             'Access-Control-Expose-Headers': 'X-Total-Count',
-            'X-Total-Count': contratos_data.count()
+            'X-Total-Count': total_count
         }
 
         return contratos_data.all(), 200, headers
@@ -170,17 +180,31 @@ class ContratoAggregateApi(ContratoApi):
         # Tuples with SQLAlchemy function and args to get parts of values.
         # This allows to group by years or months for example.
         parts = {
-            'year': (lambda field: [func.extract('year', field)],
-                     lambda values: list(values)[0]),
-            'month': (lambda field: [func.extract('year', field), func.extract('month', field)],
-                      lambda values: '-'.join([format(v, '02') for v in values])),
-            'day': (lambda field: [func.extract('year', field), func.extract('month', field), func.extract('day', field)],
-                    lambda values: '-'.join([format(v, '02') for v in values])),
+            'year': (
+                lambda field: [func.extract('year', field)],
+                lambda values: list(values)[0]
+                ),
+            'month': (
+                lambda field: [
+                    func.extract('year', field),
+                    func.extract('month', field),
+                    ],
+                lambda values: '-'.join([format(v, '02') for v in values])
+                ),
+            'day': (
+                lambda field: [
+                    func.extract('year', field),
+                    func.extract('month', field),
+                    func.extract('day', field),
+                    ],
+                lambda values: '-'.join([format(v, '02') for v in values])
+                ),
         }
 
         for field_name in group_by:
             part = None
-            if field_name.endswith(tuple(map(lambda a: '__{}'.format(a), parts.keys()))):
+            if field_name.endswith(
+                    tuple(map(lambda a: '__{}'.format(a), parts.keys()))):
                 # User asked to group using only part of value.
                 # Get the original field name and which part we should use.
                 # "?group_by=data_publicacao__year" results in
@@ -192,7 +216,9 @@ class ContratoAggregateApi(ContratoApi):
                 if part:
                     # Apply the "part" function
                     group_by_field = parts[part][0](group_by_field[0])
-                    temporary_keys.extend(['{}__{}'.format(field_name, i) for i in range(len(group_by_field))])
+                    temporary_keys.extend(['{}__{}'.format(field_name, i)
+                                           for i in range(len(group_by_field))
+                                           ])
                     partial_fields.append({
                         'field_name': field_name,
                         'count': len(group_by_field),
@@ -224,16 +250,20 @@ class ContratoAggregateApi(ContratoApi):
 
         # Create the dictionary used to marshal
         fields_ = {'count': fields.Integer()}
-        fields_.update({key: contratos_fields.get(key, fields.String()) for key in keys})
+        fields_.update({key: contratos_fields.get(key, fields.String())
+                        for key in keys})
 
         # Create a list of dictionaries
-        result = map(lambda a: dict(zip(['count'] + temporary_keys, a)), contratos_data.all())
+        result = map(lambda a: dict(zip(['count'] + temporary_keys, a)),
+                     contratos_data.all())
 
         # Set partial dates type to string
         for f in partial_fields:
             fields_[f['field_name']] = fields.String()
             for item in result:
-                item[f['field_name']] = parts[f['part_name']][1]((item.pop('{}__{}'.format(f['field_name'], i)) for i in range(f['count'])))
+                item[f['field_name']] = parts[f['part_name']][1](
+                    (item.pop('{}__{}'.format(f['field_name'], i))
+                     for i in range(f['count'])))
 
         return restful.marshal(result, fields_), 200, headers
 
@@ -243,7 +273,8 @@ contratos_api.add_resource(ContratoAggregateApi, '/contrato/aggregate')
 @contratos.route('/contrato/<contract_id>')
 def show_contract(contract_id):
     try:
-        contrato = db.session.query(Contrato).filter(Contrato.numero == contract_id).one()
+        contrato = db.session.query(Contrato).filter(
+            Contrato.numero == contract_id).one()
 
         return render_template('contrato.html', contrato=contrato)
     except TemplateNotFound:
@@ -252,20 +283,31 @@ def show_contract(contract_id):
 
 @contratos.route('/contrato/cnpj/<cnpj>')
 def contracts_for_cnpj(cnpj):
-    cnpj = "{}.{}.{}/{}-{}".format( cnpj[0:2], cnpj[2:5], cnpj[5:8], cnpj[8:12], cnpj[12:14])
-    #    contratos = db.session.query(Contrato).filter(Contrato.cnpj == cnpj).all()
+    cnpj = "{}.{}.{}/{}-{}".format(cnpj[0:2],
+                                   cnpj[2:5],
+                                   cnpj[5:8],
+                                   cnpj[8:12],
+                                   cnpj[12:14])
 
     page = int(request.args.get('page', 1))
     per_page_num = 10
 
     try:
-        contratos_query = db.session.query(Contrato).filter(Contrato.cnpj == cnpj)
-        contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        contratos_query = db.session.query(Contrato).filter(
+            Contrato.cnpj == cnpj)
+        contratos_ = contratos_query.offset(
+            (page-1)*per_page_num).limit(per_page_num).all()
         count = contratos_query.count()
-        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+        pagination = Pagination(page=page, per_page=per_page_num, total=count,
+                                found=count, bs_version=3, search=True,
+                                record_name='contratos')
 
-
-        return render_template('contratos-cnpj.html', contratos=contratos, pagination=pagination, count=count, filter_info=u"Fornecedor", filter_value=cnpj)
+        return render_template('contratos-cnpj.html',
+                               contratos=contratos_,
+                               pagination=pagination,
+                               count=count,
+                               filter_info=u"Fornecedor",
+                               filter_value=cnpj)
 
     except TemplateNotFound:
         abort(404)
@@ -277,13 +319,21 @@ def contracts_for_orgao(orgao):
     per_page_num = 10
 
     try:
-        contratos_query = db.session.query(Contrato).filter(Contrato.orgao == orgao)
-        contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        contratos_query = db.session.query(Contrato).filter(
+            Contrato.orgao == orgao)
+        contratos_ = contratos_query.offset(
+            (page-1)*per_page_num).limit(per_page_num).all()
         count = contratos_query.count()
-        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+        pagination = Pagination(page=page, per_page=per_page_num, total=count,
+                                found=count, bs_version=3, search=True,
+                                record_name='contratos')
 
-
-        return render_template('contratos-orgao.html', contratos=contratos, pagination=pagination, count=count, filter_info=u"Orgão", filter_value=orgao)
+        return render_template('contratos-orgao.html',
+                               contratos=contratos_,
+                               pagination=pagination,
+                               count=count,
+                               filter_info=u"Orgão",
+                               filter_value=orgao)
     except TemplateNotFound:
         abort(404)
 
@@ -294,12 +344,21 @@ def contracts_for_modalidade(modalidade):
     per_page_num = 10
 
     try:
-        contratos_query = db.session.query(Contrato).filter(Contrato.modalidade == modalidade)
-        contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        contratos_query = db.session.query(Contrato).filter(
+            Contrato.modalidade == modalidade)
+        contratos_ = contratos_query.offset(
+            (page-1)*per_page_num).limit(per_page_num).all()
         count = contratos_query.count()
-        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+        pagination = Pagination(page=page, per_page=per_page_num, total=count,
+                                found=count, bs_version=3, search=True,
+                                record_name='contratos')
 
-        return render_template('contratos-orgao.html', contratos=contratos, pagination=pagination, count=count, filter_info="Modalidade", filter_value=modalidade)
+        return render_template('contratos-orgao.html',
+                               contratos=contratos_,
+                               pagination=pagination,
+                               count=count,
+                               filter_info="Modalidade",
+                               filter_value=modalidade)
 
     except TemplateNotFound:
         abort(404)
@@ -311,12 +370,21 @@ def contracts_for_evento(evento):
     per_page_num = 10
 
     try:
-        contratos_query = db.session.query(Contrato).filter(Contrato.evento == evento)
-        contratos = contratos_query.offset((page-1)*per_page_num).limit(per_page_num).all()
+        contratos_query = db.session.query(Contrato).filter(
+            Contrato.evento == evento)
+        contratos_ = contratos_query.offset(
+            (page-1)*per_page_num).limit(per_page_num).all()
         count = contratos_query.count()
-        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+        pagination = Pagination(page=page, per_page=per_page_num, total=count,
+                                found=count, bs_version=3, search=True,
+                                record_name='contratos')
 
-        return render_template('contratos-orgao.html', contratos=contratos, pagination=pagination, count=count, filter_info="Evento", filter_value=evento)
+        return render_template('contratos-orgao.html',
+                               contratos=contratos_,
+                               pagination=pagination,
+                               count=count,
+                               filter_info="Evento",
+                               filter_value=evento)
 
     except TemplateNotFound:
         abort(404)
@@ -327,10 +395,16 @@ def all_contracts():
     page = int(request.args.get('page', 1))
     per_page_num = 40
     try:
-        contratos = db.session.query(Contrato).offset((page-1)*per_page_num).limit(per_page_num).all()
+        contratos_ = db.session.query(Contrato).offset(
+            (page-1)*per_page_num).limit(per_page_num).all()
         count = db.session.query(Contrato).count()
-        pagination = Pagination(page=page, per_page=per_page_num, total=count, found=count, bs_version=3, search=True, record_name='contratos')
+        pagination = Pagination(page=page, per_page=per_page_num, total=count,
+                                found=count, bs_version=3, search=True,
+                                record_name='contratos')
 
-        return render_template('todos-contratos.html', contratos=contratos, pagination=pagination, count=count)
+        return render_template('todos-contratos.html',
+                               contratos=contratos_,
+                               pagination=pagination,
+                               count=count)
     except TemplateNotFound:
         abort(404)
