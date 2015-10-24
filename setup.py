@@ -34,6 +34,7 @@ setup(
         'psycopg2',
         'xlrd',
         'elasticsearch>=1.0.0,<2.0.0',
+        'elasticsearch-dsl',
     ],
     classifiers=[
         'Environment :: Web Environment',

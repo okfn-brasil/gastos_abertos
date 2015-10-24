@@ -19,7 +19,9 @@ from docopt import docopt
 
 from gastosabertos import create_app
 
-from gastosabertos.contratos.models import Contrato 
+from gastosabertos.contratos.models import Contrato
+
+from utils import ProgressCounter
 
 
 def get_db():
@@ -29,28 +31,30 @@ def get_db():
     return db
 
 
-def parse_money(money_string):
-    return str(money_string).replace('.', '').replace(',', '.')
-
-
-def parse_date(date_string):
-    new_date = datetime.strptime(date_string, '%d/%m/%Y')
-    return new_date
-
-
-def insert_rows(db, rows_data):
-    ins = insert(Contrato.__table__, rows_data)
-    db.session.execute(ins)
-    db.session.commit()
-
-
 def insert_all(db, csv_file='../data/urls.csv', lines_per_insert=100):
+    print("Getting Contratos urls from: " + csv_file)
     data = pd.read_csv(csv_file)
 
-    for di, d in data[:10].iterrows():
-        stmt = update(Contrato).values({'file_url':d['file_url'], 'txt_file_url':d['file_txt']}).where(Contrato.numero == d['numero'])		
+    total = len(data)
+    counter = ProgressCounter(total)
+
+    to_update = 0
+    updated = 0
+    for di, d in data.iterrows():
+        to_update += 1
+        stmt = update(Contrato).values({'file_url':d['file_url'], 'txt_file_url':d['file_txt']}).where(Contrato.numero == str(d['numero']))
         db.session.execute(stmt)
-        db.session.commit()
+        if to_update == lines_per_insert or (updated + to_update) == total:
+            counter.update(to_update)
+            updated += to_update
+            to_update = 0
+            db.session.commit()
+
+
+    counter.end()
+
+    print("Updated {} Contratos".format(updated))
+
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)

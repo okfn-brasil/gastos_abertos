@@ -35,21 +35,30 @@ def initdb():
     db.create_all()
 
 
-@manager.command
-def importdata():
-    """Import the data to the database"""
+def _importrevenue():
+    """Import revenue data to the database"""
     from utils.import_revenue_codes import import_codes
-    from utils import (import_revenue, import_contrato,
-                       import_execucao, geocode_execucao,
-                       update_execucao_year_info)
+    from utils import import_revenue
 
     # Revenue
     import_codes(db)
     import_revenue.insert_all(db, csv_file='data/receitas_min.csv')
     # insert_all(db, csv_file='data/receitas_min.csv', lines_per_insert=80)
 
+
+def _importcontratos():
+    """Import contratos data to the database"""
+    from utils import import_contrato, import_contrato_urls
+
     # Contratos
     import_contrato.insert_all(db, csv_file='data/contratos-2014.xls')
+    import_contrato_urls.insert_all(db, csv_file='data/urls.csv')
+
+
+def _importexecucao():
+    """Import execucao data to the database"""
+    from utils import (import_execucao, geocode_execucao,
+                       update_execucao_year_info)
 
     # Execucao
     folder = '../gastos_abertos_dados/Orcamento/execucao/'
@@ -58,6 +67,24 @@ def importdata():
     terms_folder = 'utils/geocoder/terms'
     geocode_execucao.geocode_all(db, data_folder, terms_folder)
     update_execucao_year_info.update_all_years_info(db)
+
+
+@manager.command
+@manager.option('-d', '--data', help='Data type to be imported')
+@manager.option('-r', '--reset', help='Remove previous data from database before importing')
+def importdata(data='all', reset=False):
+    """Import the data to the database"""
+    data = data.lower()
+
+    if reset:
+        initdb()
+
+    if data in ('all', 'revenue'):
+        _importrevenue()
+    if data in ('all', 'contratos'):
+        _importcontratos()
+    if data in ('all', 'execucao'):
+        _importexecucao()
 
 
 if __name__ == "__main__":
