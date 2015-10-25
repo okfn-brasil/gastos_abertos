@@ -87,5 +87,24 @@ def importdata(data='all', reset=False):
         _importexecucao()
 
 
+@manager.command
+@manager.option('-r', '--resource', help='Resource to be indexed')
+def build_search_index(resource='all'):
+    """Build search index"""
+    from utils import build_search_index
+    resource = resource.lower()
+
+    if resource in ('all', 'contratos'):
+        build_search_index.build_contratos_index()
+
+
+@manager.command
+def download_contratos():
+    """Download Contratos files"""
+    from utils import build_search_index
+
+    build_search_index.download_contratos_files(csv_file='data/urls.csv', directory='data/contratos')
+
+
 if __name__ == "__main__":
     manager.run()

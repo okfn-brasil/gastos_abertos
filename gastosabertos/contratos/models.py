@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 #import locale
+import os
 
-from ..models import db, Column, Model
+from ..models import db, Column, Model, searchable
 
 #try:
 #    locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -16,15 +17,15 @@ class Contrato(Model):
 
     id = Column(db.Integer, primary_key=True)
     numero = Column(db.String(60), nullable=False)
-    orgao = Column(db.Text())
+    orgao = Column(db.Text(), searchable=True)
     data_assinatura = Column(db.DateTime())
     vigencia = Column(db.Integer)
-    objeto = Column(db.Text())
+    objeto = Column(db.Text(), searchable=True)
     modalidade = Column(db.Text())
     evento = Column(db.Text())
     processo_administrativo = Column(db.Text())
-    cnpj = Column(db.Text())
-    nome_fornecedor = Column(db.Text())
+    cnpj = Column(db.Text(), searchable=True)
+    nome_fornecedor = Column(db.Text(), searchable=True)
     valor = Column(db.DECIMAL(19, 2))
     licitacao = Column(db.String(60), nullable=False)
     data_publicacao = Column(db.DateTime())
@@ -50,3 +51,31 @@ class Contrato(Model):
     @property
     def clean_cnpj(self):
         return ''.join([c for c in self.cnpj if c not in ['.', '/', '-']])
+
+    @property
+    @searchable(db.Text())
+    def content(self):
+        if not hasattr(self, '__content_cache'):
+            content = ''
+            url = self.txt_file_url
+            if url and isinstance(url, basestring) and url.startswith('http'):
+                filename = url.split('/')[-1]
+                filepath = os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    '..', '..', 'data', 'contratos', filename)
+                if os.path.isfile(filepath):
+                    # try to get the content from a local file
+                    with open(filepath, 'r') as file:
+                        content = file.read()
+                else:
+                    # could not get the local file, lets download it
+                    import urllib2
+                    try:
+                        file = urllib2.urlopen(url)
+                        content = file.read()
+                    except urllib2.HTTPError:
+                        content = ''
+                    finally:
+                        file.close()
+            self.__content_cache = content.decode('utf-8', 'ignore').strip()
+        return self.__content_cache

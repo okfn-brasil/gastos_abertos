@@ -10,10 +10,6 @@ Options:
     -h --help   Show this message.
 '''
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import calendar
-from sqlalchemy.sql.expression import insert
 from sqlalchemy import update
 from docopt import docopt
 
@@ -49,7 +45,6 @@ def insert_all(db, csv_file='../data/urls.csv', lines_per_insert=100):
             updated += to_update
             to_update = 0
             db.session.commit()
-
 
     counter.end()
 

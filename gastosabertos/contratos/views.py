@@ -64,8 +64,6 @@ class ContratoApi(restful.Resource):
     def filter(self, contratos_data):
         # Extract the arguments in GET request
         args = contratos_list_parser.parse_args()
-        page = args['page']
-        per_page_num = args['per_page_num']
         cnpj = args['cnpj']
         nome_fornecedor = args['nome_fornecedor']
         orgao = args['orgao']
@@ -115,10 +113,6 @@ class ContratoApi(restful.Resource):
             contratos_data = contratos_data.filter(
                 Contrato.licitacao.ilike(licitacao_query))
 
-        # Limit que number of results per page
-        contratos_data = contratos_data.offset(
-            page*per_page_num).limit(per_page_num)
-
         return contratos_data
 
     def order(self, contratos_data):
@@ -141,17 +135,30 @@ class ContratoApi(restful.Resource):
 
         return contratos_data
 
+    def paginate(self, contratos_data):
+        args = contratos_list_parser.parse_args()
+        page = args['page']
+        per_page_num = args['per_page_num']
+
+        # Limit que number of results per page
+        contratos_data = contratos_data.offset(
+            page*per_page_num).limit(per_page_num)
+
+        return contratos_data
+
 
 class ContratoListApi(ContratoApi):
 
     @restful.marshal_with(contratos_fields)
     def get(self):
-        contratos_data = db.session.query(Contrato)
-
-        total_count = contratos_data.count()
+        contratos_data = Contrato.filter()
 
         contratos_data = self.order(contratos_data)
         contratos_data = self.filter(contratos_data)
+
+        total_count = contratos_data.count()
+
+        contratos_data = self.paginate(contratos_data)
 
         headers = {
             # Add 'Access-Control-Expose-Headers' header here is a workaround
@@ -241,11 +248,15 @@ class ContratoAggregateApi(ContratoApi):
         contratos_data = self.order(contratos_data)
         contratos_data = self.filter(contratos_data)
 
+        total_count = contratos_data.count()
+
+        contratos_data = self.paginate(contratos_data)
+
         headers = {
             # Add 'Access-Control-Expose-Headers' header here is a workaround
             # until Flask-Restful adds support to it.
             'Access-Control-Expose-Headers': 'X-Total-Count',
-            'X-Total-Count': contratos_data.count()
+            'X-Total-Count': total_count
         }
 
         # Create the dictionary used to marshal
