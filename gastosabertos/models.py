@@ -105,6 +105,63 @@ class Column(SA_Column):
         return col
 
 
+class ES_QuerySet(object):
+
+    def __init__(self, model, search, vals=None):
+        self._model = model
+        self._search = search
+        self._response = None
+        self._sqlalchemy_query = None
+        self._vals = {
+            'pos': 0,
+            'size': 100,
+        }
+        self._vals.update(vals or {})
+
+    def _execute(self):
+        print self._search.to_dict()
+        if not self._response:
+            self._response = self._search.execute()
+        return self._response
+
+    def _do_sqlalchemy_query(self):
+        if not self._sqlalchemy_query:
+            self._sqlalchemy_query = self._model.filter(
+                self._model.id.in_([r.id for r in self._response]))
+        return self._sqlalchemy_query
+
+    def all(self):
+        self._execute()
+        self._do_sqlalchemy_query()
+        return self._sqlalchemy_query.all()
+
+    def count(self):
+        self._execute()
+        return self._response.hits.total
+
+    def order_by(self, *args, **kwargs):
+        print 'order_by is not implemented yet'
+        return self
+
+    def filter(self, *args, **kwargs):
+        print 'filter is not implemented yet'
+        return self
+
+    def offset(self, pos):
+        vals = self._vals.copy()
+        vals.update(pos=pos)
+        start = pos
+        stop = start + vals['size']
+        return self.__class__(self._model, self._search[start:stop], vals)
+
+    def limit(self, size):
+        vals = self._vals.copy()
+        vals.update(size=size)
+        start = vals['pos']
+        stop = start + size
+        return self.__class__(self._model, self._search[start:stop], vals)
+
+
 class _SearchableMixinMeta(type):
     def __init__(cls, name, bases, attrs):
         super(_SearchableMixinMeta, cls).__init__(name, bases, attrs)
@@ -135,8 +192,7 @@ class _SearchableMixin(object):
         s = s.query(ES_Q('simple_query_string', query=query,
                          analyzer='brazilian',
                          fields=cls._es_string_fieldnames))
-        response = s.execute()
-        return cls.filter(cls.id.in_([r.id for r in response]))
+        return ES_QuerySet(model=cls, search=s)
 
     @classmethod
     def build_search_index(cls, reset=True):

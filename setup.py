@@ -35,6 +35,7 @@ setup(
         'xlrd',
         'elasticsearch>=1.0.0,<2.0.0',
         'elasticsearch-dsl',
+	'futures',
     ],
     classifiers=[
         'Environment :: Web Environment',

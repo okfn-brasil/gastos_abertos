@@ -28,22 +28,26 @@ contratos_api = restful.Api(contratos, prefix="/api/v1")
 #         return str(value)
 
 # Parser for RevenueAPI arguments
-contratos_list_parser = RequestParser()
-contratos_list_parser.add_argument('cnpj')
-contratos_list_parser.add_argument('orgao')
-contratos_list_parser.add_argument('modalidade')
-contratos_list_parser.add_argument('evento')
-contratos_list_parser.add_argument('objeto')
-contratos_list_parser.add_argument('processo_administrativo')
-contratos_list_parser.add_argument('nome_fornecedor')
-contratos_list_parser.add_argument('licitacao')
-contratos_list_parser.add_argument('group_by', default='')
-contratos_list_parser.add_argument('order_by', 'id')
-contratos_list_parser.add_argument('page', type=int, default=0)
-contratos_list_parser.add_argument('per_page_num', type=int, default=100)
+filter_parser = RequestParser()
+filter_parser.add_argument('cnpj')
+filter_parser.add_argument('orgao')
+filter_parser.add_argument('modalidade')
+filter_parser.add_argument('evento')
+filter_parser.add_argument('objeto')
+filter_parser.add_argument('processo_administrativo')
+filter_parser.add_argument('nome_fornecedor')
+filter_parser.add_argument('licitacao')
+filter_parser.add_argument('group_by', default='')
 
-contratos_search_parser = RequestParser()
-contratos_search_parser.add_argument('query')
+order_by_parser = RequestParser()
+order_by_parser.add_argument('order_by', 'id')
+
+pagination_parser = RequestParser()
+pagination_parser.add_argument('page', type=int, default=0)
+pagination_parser.add_argument('per_page_num', type=int, default=100)
+
+search_parser = RequestParser()
+search_parser.add_argument('query')
 
 # Fields for ContratoAPI data marshal
 contratos_fields = {'id': fields.Integer(),
@@ -66,7 +70,7 @@ class ContratoApi(restful.Resource):
 
     def filter(self, contratos_data):
         # Extract the arguments in GET request
-        args = contratos_list_parser.parse_args()
+        args = filter_parser.parse_args()
         cnpj = args['cnpj']
         nome_fornecedor = args['nome_fornecedor']
         orgao = args['orgao']
@@ -119,7 +123,7 @@ class ContratoApi(restful.Resource):
         return contratos_data
 
     def order(self, contratos_data):
-        args = contratos_list_parser.parse_args()
+        args = order_by_parser.parse_args()
         order_by = args['order_by'].split(',')
 
         if order_by:
@@ -139,7 +143,7 @@ class ContratoApi(restful.Resource):
         return contratos_data
 
     def paginate(self, contratos_data):
-        args = contratos_list_parser.parse_args()
+        args = pagination_parser.parse_args()
         page = args['page']
         per_page_num = args['per_page_num']
 
@@ -179,7 +183,7 @@ class ContratoSearchApi(ContratoApi):
 
     @restful.marshal_with(contratos_fields)
     def get(self):
-        args = contratos_search_parser.parse_args()
+        args = search_parser.parse_args()
         query = args['query']
 
         contratos_data = Contrato.search(query)
