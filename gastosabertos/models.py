@@ -3,6 +3,7 @@
 import inspect
 from functools import wraps
 from concurrent import futures
+import unicodedata
 
 from sqlalchemy import Column as SA_Column
 from sqlalchemy.ext.declarative import AbstractConcreteBase
@@ -17,6 +18,11 @@ from elasticsearch_dsl import (
     Float as ES_Float,
     Integer as ES_Integer,
     String as ES_String,
+    Index as ES_Index,
+    Search as ES_Search,
+    Q as ES_Q,
+    analyzer as es_analyzer,
+    tokenizer as es_tokenizer,
 )
 from elasticsearch_dsl.connections import connections as es_connections
 
@@ -40,8 +46,14 @@ SA_TO_ES = {
     db.UnicodeText: ES_String,  # check
 }
 
+ES_DEFAULT_OPTIONS = {
+    ES_String: {'index_analyzer': 'brazilian'}
+}
+
 # FIXME: should be configurable
-es_connections.create_connection(hosts=['localhost'])
+INDEX = 'gastos_abertos'
+HOSTS = ['localhost']
+es_connections.create_connection(hosts=HOSTS)
 
 
 def _create_es_field(sa_type, es_kwargs):
@@ -49,12 +61,13 @@ def _create_es_field(sa_type, es_kwargs):
         sa_type = sa_type.__class__
 
     es_type = SA_TO_ES.get(sa_type, None)
-    es_kwargs = es_kwargs or {}
-
     if not es_type:
         return None
 
-    field = es_type(**es_kwargs)
+    es_kwargs_ = ES_DEFAULT_OPTIONS.get(es_type, {})
+    es_kwargs_.update(es_kwargs or {})
+
+    field = es_type(**es_kwargs_)
 
     return field
 
@@ -69,7 +82,7 @@ def _create_es_doctype_class(name, index, fields):
     attrs.update(fields)
     attrs['Meta'] = type('Meta', (), {'index': index})
     cls = type(name, (ES_DocType, ), attrs)
-    cls.init()
+    #cls.init()
     return cls
 
 
@@ -107,19 +120,31 @@ class _SearchableMixinMeta(type):
                     # get elastcsearch fields from properties
                     fields[k] = v.fget._es_field
             # save reference to elasticsearch field names
-            cls._es_fieldnames = [name for name, _ in fields.iteritems()]
+            cls._es_fieldnames = fields.keys()
+            cls._es_string_fieldnames = [f for f, t in fields.iteritems()
+                                         if isinstance(t, ES_String)]
             # save reference to elasticsearch DocType class
-            cls._es_doctype = _create_es_doctype_class(name, tablename, fields)
+            cls._es_doctype = _create_es_doctype_class(
+                name, INDEX, fields)
 
 
 class _SearchableMixin(object):
     @classmethod
     def search(cls, query):
-        pass
+        s = ES_Search().doc_type(cls._es_doctype)
+        s = s.query(ES_Q('simple_query_string', query=query,
+                         analyzer='brazilian',
+                         fields=cls._es_string_fieldnames))
+        response = s.execute()
+        return cls.filter(cls.id.in_([r.id for r in response]))
 
     @classmethod
     def build_search_index(cls, reset=True):
-        # TODO: use the reset arg
+        if reset:
+            index = ES_Index(cls._es_doctype._doc_type.index)
+            index.delete(ignore=404)
+            cls._es_doctype.init()
+
 
         def add_to_index(id_, db, app):
             with app.app_context():
@@ -127,15 +152,16 @@ class _SearchableMixin(object):
                 obj.add_to_search_index()
 
         app = db.get_app()
+
         with futures.ThreadPoolExecutor(max_workers=10) as executor:
-            future_to_id = dict((executor.submit(add_to_index, id_, db, app), id_)
-                                 for id_ in xrange(cls.count() + 1))
+            future_to_id = dict((executor.submit(add_to_index, id_, db, app),
+                                 id_) for id_ in xrange(1, cls.count() + 1))
 
             for future in futures.as_completed(future_to_id):
                 id = future_to_id[future]
                 if future.exception() is not None:
-                    print('%r generated an exception: %s' % (id,
-                                                             future.exception()))
+                    print('%r generated an exception: %s' % (
+                        id, future.exception()))
 
     def add_to_search_index(self):
         kwargs = self._get_searchable_values()
@@ -167,10 +193,10 @@ class Model(AbstractConcreteBase, db.Model, _SearchableMixin):
         return db.session.query(opts)
 
     @classmethod
-    def filter(cls, filter=None):
+    def filter(cls, *args):
         query = cls.query(cls)
-        if filter:
-            query = query.filter(filter)
+        if args:
+            query = query.filter(*args)
         return query
 
     @classmethod

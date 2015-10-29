@@ -42,6 +42,9 @@ contratos_list_parser.add_argument('order_by', 'id')
 contratos_list_parser.add_argument('page', type=int, default=0)
 contratos_list_parser.add_argument('per_page_num', type=int, default=100)
 
+contratos_search_parser = RequestParser()
+contratos_search_parser.add_argument('query')
+
 # Fields for ContratoAPI data marshal
 contratos_fields = {'id': fields.Integer(),
                     'orgao': fields.String(),
@@ -170,6 +173,35 @@ class ContratoListApi(ContratoApi):
         return contratos_data.all(), 200, headers
 
 contratos_api.add_resource(ContratoListApi, '/contrato/list')
+
+
+class ContratoSearchApi(ContratoApi):
+
+    @restful.marshal_with(contratos_fields)
+    def get(self):
+        args = contratos_search_parser.parse_args()
+        query = args['query']
+
+        contratos_data = Contrato.search(query)
+
+        #contratos_data = self.order(contratos_data)
+        #contratos_data = self.filter(contratos_data)
+
+        total_count = contratos_data.count()
+
+        contratos_data = self.paginate(contratos_data)
+        print contratos_data
+
+        headers = {
+            # Add 'Access-Control-Expose-Headers' header here is a workaround
+            # until Flask-Restful adds support to it.
+            'Access-Control-Expose-Headers': 'X-Total-Count',
+            'X-Total-Count': total_count
+        }
+
+        return contratos_data.all(), 200, headers
+
+contratos_api.add_resource(ContratoSearchApi, '/contrato/search')
 
 
 class ContratoAggregateApi(ContratoApi):
