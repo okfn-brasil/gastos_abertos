@@ -48,7 +48,8 @@ SA_TO_ES = {
 }
 
 ES_DEFAULT_OPTIONS = {
-    ES_String: {'index_analyzer': 'stop', 'search_analyzer': 'brazilian'}
+    ES_String: {'index_analyzer': 'ga_analyzer',
+                'search_analyzer': 'ga_search_analyzer'}
 }
 
 # FIXME: should be configurable
@@ -57,7 +58,7 @@ HOSTS = ['localhost']
 es_connection = es_connections.create_connection(hosts=HOSTS)
 
 
-def _create_es_field(sa_type, es_kwargs):
+def _create_es_field(sa_type, es_kwargs, boost=None):
     if not inspect.isclass(sa_type):
         sa_type = sa_type.__class__
 
@@ -69,6 +70,7 @@ def _create_es_field(sa_type, es_kwargs):
     es_kwargs_.update(es_kwargs or {})
 
     field = es_type(**es_kwargs_)
+    field._search_boost = boost
 
     return field
 
@@ -99,7 +101,7 @@ def _create_es_doctype_class(name, index, fields):
 
 class Column(SA_Column):
     def __init__(self, type_, primary_key=False,
-                 searchable=None, search_config=None,
+                 searchable=None, search_config=None, boost=None,
                  *args, **kwargs):
         super(Column, self).__init__(type_, primary_key=primary_key,
                                      *args, **kwargs)
@@ -108,7 +110,7 @@ class Column(SA_Column):
             searchable = True
 
         if searchable or primary_key:
-            self._es_field = _create_es_field(type_, search_config)
+            self._es_field = _create_es_field(type_, search_config, boost)
 
     def _constructor(self, name, type_, **kw):
         col = Column(type_, **kw)
@@ -138,7 +140,7 @@ class ES_QuerySet(object):
     def _do_sqlalchemy_query(self):
         if not self._sqlalchemy_query:
             self._sqlalchemy_query = self._model.filter(
-                self._model.id.in_([r.id for r in self._response]))
+                self._model.id.in_([r._id for r in self._response]))
         return self._sqlalchemy_query
 
     def all(self):
@@ -191,6 +193,10 @@ class _SearchableMixinMeta(type):
             cls._es_fieldnames = fields.keys()
             cls._es_string_fieldnames = [f for f, t in fields.iteritems()
                                          if isinstance(t, ES_String)]
+            cls._es_string_fieldnames_with_boost = [
+                ('{}^{}'.format(f, t._search_boost)
+                 if t._search_boost else f) for f, t in fields.iteritems()
+                if isinstance(t, ES_String)]
             # save reference to elasticsearch DocType class
             cls._es_doctype = _create_es_doctype_class(
                 name, INDEX, fields)
@@ -198,20 +204,38 @@ class _SearchableMixinMeta(type):
 
 class _SearchableMixin(object):
     @classmethod
-    def search(cls, query, fields=None):
+    def _prepare_search(cls, query, fields=None):
         if fields and not (isinstance(fields, collections.Iterable) and
                 not isinstance(fields, basestring)):
             fields = [fields]
         fieldnames = ([_get_fieldname(f) for f in fields] if fields else
-                     cls._es_string_fieldnames)
+                     cls._es_string_fieldnames_with_boost)
         s = ES_Search().doc_type(cls._es_doctype)
-        # TODO: accept a dict as query, using the field as key
-        s = s.query(ES_Q('simple_query_string', query=query,
+        # Get only ids to avoid json decode issues
+        s.update_from_dict({'fields': 'id'})
+        return s, fieldnames
+
+    @classmethod
+    def fuzzy(cls, query, fields=None):
+        s, fieldnames = cls._prepare_search(query, fields=None)
+        s = s.query(ES_Q('fuzzy_like_this', like_text=query,
+                         analyzer='ga_search_analyzer',
                          fields=fieldnames))
         return ES_QuerySet(model=cls, search=s)
 
     @classmethod
-    def suggestion(cls, text, field):
+    def search(cls, query, fields=None, default_operator='and', fuzzy=False):
+        if fuzzy:
+            return cls.fuzzy(query, fields)
+        s, fieldnames = cls._prepare_search(query, fields=None)
+        s = s.query(ES_Q('simple_query_string', query=query,
+                         analyzer='ga_search_analyzer',
+                         default_operator=default_operator,
+                         fields=fieldnames))
+        return ES_QuerySet(model=cls, search=s)
+
+    @classmethod
+    def suggestions(cls, text, field=None):
         fieldname = _get_fieldname(field)
 
         response = es_connection.suggest({
@@ -219,11 +243,25 @@ class _SearchableMixin(object):
                 'text': text,
                 'term': {
                     'field': fieldname,
-                    'analyzer': 'stop',
+                    'analyzer': 'standard',
                 }
             }
         }, index=INDEX)
-        return response['suggestion'][0]['options']
+        return [s['options'] for s in response['suggestion']]
+
+    @classmethod
+    def suggestion(cls, text, field=None):
+        if not field:
+            field = cls._es_fields[0]
+        suggestions = cls.suggestions(text, field)
+        words = text.split()
+        new = []
+        for i, suggestion in enumerate(suggestions):
+            if suggestion:
+                new.append(suggestion[0]['text'])
+            else:
+                new.append(words[i])
+        return u' '.join(new)
 
     @classmethod
     def build_search_index(cls, reset=True):

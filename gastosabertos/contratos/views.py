@@ -47,6 +47,7 @@ pagination_parser.add_argument('page', type=int, default=0)
 pagination_parser.add_argument('per_page_num', type=int, default=100)
 
 search_parser = RequestParser()
+search_parser.add_argument('fuzzy', type=bool, default=False)
 search_parser.add_argument('query')
 
 # Fields for ContratoAPI data marshal
@@ -84,39 +85,39 @@ class ContratoApi(restful.Resource):
             contratos_data = contratos_data.filter(Contrato.cnpj == cnpj)
 
         if nome_fornecedor:
-            nome_query = '%{}%'.format(nome_fornecedor)
+            nome_query = u'%{}%'.format(nome_fornecedor)
             contratos_data = contratos_data.filter(
                 Contrato.nome_fornecedor.ilike(nome_query))
 
         if orgao:
-            orgao_query = '%{}%'.format(orgao)
+            orgao_query = u'%{}%'.format(orgao)
             contratos_data = contratos_data.filter(
                 Contrato.orgao.ilike(orgao_query))
 
         if modalidade:
-            modalidade_query = '%{}%'.format(modalidade)
+            modalidade_query = u'%{}%'.format(modalidade)
             contratos_data = contratos_data.filter(
                 Contrato.modalidade.ilike(modalidade_query))
 
         if evento:
-            evento_query = '%{}%'.format(evento)
+            evento_query = u'%{}%'.format(evento)
             contratos_data = contratos_data.filter(
                 Contrato.evento.ilike(evento_query))
 
         if objeto:
-            objeto_query = '%{}%'.format(objeto)
+            objeto_query = u'%{}%'.format(objeto)
             contratos_data = contratos_data.filter(
                 Contrato.objeto.ilike(objeto_query))
 
         if processo_administrativo:
-            processo_administrativo_query = '%{}%'.format(
+            processo_administrativo_query = u'%{}%'.format(
                 rocesso_administrativo)
             contratos_data = contratos_data.filter(
                 Contrato.processo_administrativo.ilike(
                     processo_administrativo_query))
 
         if licitacao:
-            licitacao_query = '%{}%'.format(licitacao)
+            licitacao_query = u'%{}%'.format(licitacao)
             contratos_data = contratos_data.filter(
                 Contrato.licitacao.ilike(licitacao_query))
 
@@ -185,8 +186,9 @@ class ContratoSearchApi(ContratoApi):
     def get(self):
         args = search_parser.parse_args()
         query = args['query']
+        fuzzy = args['fuzzy']
 
-        contratos_data = Contrato.search(query)
+        contratos_data = Contrato.search(query, fuzzy=fuzzy)
 
         #contratos_data = self.order(contratos_data)
         #contratos_data = self.filter(contratos_data)
