@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import inspect
+import collections
 from functools import wraps
 from concurrent import futures
 import unicodedata
@@ -47,13 +48,13 @@ SA_TO_ES = {
 }
 
 ES_DEFAULT_OPTIONS = {
-    ES_String: {'index_analyzer': 'brazilian'}
+    ES_String: {'index_analyzer': 'stop', 'search_analyzer': 'brazilian'}
 }
 
 # FIXME: should be configurable
 INDEX = 'gastos_abertos'
 HOSTS = ['localhost']
-es_connections.create_connection(hosts=HOSTS)
+es_connection = es_connections.create_connection(hosts=HOSTS)
 
 
 def _create_es_field(sa_type, es_kwargs):
@@ -75,6 +76,16 @@ def _create_es_field(sa_type, es_kwargs):
 def _get_sa_columns(model):
     mapper = class_mapper(model)
     return mapper.columns
+
+
+def _get_fieldname(field):
+    if isinstance(field, basestring):
+        fieldname = field
+    elif isinstance(field, property):
+        fieldname = field.fget.__name__
+    else:
+        fieldname = field.key
+    return fieldname
 
 
 def _create_es_doctype_class(name, index, fields):
@@ -187,12 +198,32 @@ class _SearchableMixinMeta(type):
 
 class _SearchableMixin(object):
     @classmethod
-    def search(cls, query):
+    def search(cls, query, fields=None):
+        if fields and not (isinstance(fields, collections.Iterable) and
+                not isinstance(fields, basestring)):
+            fields = [fields]
+        fieldnames = ([_get_fieldname(f) for f in fields] if fields else
+                     cls._es_string_fieldnames)
         s = ES_Search().doc_type(cls._es_doctype)
+        # TODO: accept a dict as query, using the field as key
         s = s.query(ES_Q('simple_query_string', query=query,
-                         analyzer='brazilian',
-                         fields=cls._es_string_fieldnames))
+                         fields=fieldnames))
         return ES_QuerySet(model=cls, search=s)
+
+    @classmethod
+    def suggestion(cls, text, field):
+        fieldname = _get_fieldname(field)
+
+        response = es_connection.suggest({
+            'suggestion': {
+                'text': text,
+                'term': {
+                    'field': fieldname,
+                    'analyzer': 'stop',
+                }
+            }
+        }, index=INDEX)
+        return response['suggestion'][0]['options']
 
     @classmethod
     def build_search_index(cls, reset=True):
