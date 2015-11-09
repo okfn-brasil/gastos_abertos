@@ -9,11 +9,13 @@ from jinja2 import TemplateNotFound
 from flask import Blueprint, render_template, send_from_directory, abort, request
 from flask.ext.paginate import Pagination
 from flask.ext import restful
-from flask.ext.restful import fields
-from flask.ext.restful.reqparse import RequestParser
+#from flask.ext.restful import fields
+#from flask.ext.restful.reqparse import RequestParser
+from flask.ext.restplus.reqparse import RequestParser
+from flask.ext.restplus import Resource, fields
 
 from .models import Contrato
-from gastosabertos.extensions import db
+from gastosabertos.extensions import db, api
 
 # Blueprint for Contrato
 contratos = Blueprint('contratos', __name__,
@@ -23,7 +25,10 @@ contratos = Blueprint('contratos', __name__,
 
 
 # Create the restful API
-contratos_api = restful.Api(contratos, prefix="/api/v1")
+contratos_api = restful.Api(contratos)
+
+ns = api.namespace('contratos', 'API para os contrato de São Paulo')
+
 # receita_api.decorators = [cors.crossdomain(origin='*')]
 
 # class Date(fields.Raw):
@@ -31,7 +36,8 @@ contratos_api = restful.Api(contratos, prefix="/api/v1")
 #         return str(value)
 
 # Parser for RevenueAPI arguments
-contratos_list_parser = RequestParser()
+#contratos_list_parser = RequestParser()
+contratos_list_parser = api.parser()
 contratos_list_parser.add_argument('cnpj')
 contratos_list_parser.add_argument('orgao')
 contratos_list_parser.add_argument('modalidade')
@@ -46,22 +52,23 @@ contratos_list_parser.add_argument('page', type=int, default=0)
 contratos_list_parser.add_argument('per_page_num', type=int, default=100)
 
 # Fields for ContratoAPI data marshal
-contratos_fields = { 'id': fields.Integer()
-                   , 'orgao': fields.String()
+contratos_fields = { 'id': fields.Integer(description="O número identificador único de um contrato")
+                   , 'orgao': fields.String(description="Orgão")
                    , 'data_assinatura': fields.DateTime(dt_format='iso8601')
-                   , 'vigencia': fields.Integer()
-                   , 'objeto': fields.String()
-                   , 'modalidade': fields.String()
-                   , 'evento': fields.String()
-                   , 'processo_administrativo': fields.String()
-                   , 'cnpj': fields.String()
-                   , 'nome_fornecedor': fields.String()
-                   , 'valor': fields.Float()
-                   , 'licitacao': fields.String()
+                   , 'vigencia': fields.Integer
+                   , 'objeto': fields.String(description="Texto que aparece na descricao do contrato")
+                   , 'modalidade': fields.String
+                   , 'evento': fields.String
+                   , 'processo_administrativo': fields.String
+                   , 'cnpj': fields.String
+                   , 'nome_fornecedor': fields.String
+                   , 'valor': fields.Float
+                   , 'licitacao': fields.String
                    , 'data_publicacao': fields.DateTime(dt_format='iso8601') }
 
+contratos_model = api.model('Contratos', contratos_fields) 
 
-class ContratoApi(restful.Resource):
+class ContratoApi(Resource):
 
     def filter(self, contratos_data):
         # Extract the arguments in GET request
@@ -134,9 +141,26 @@ class ContratoApi(restful.Resource):
         return contratos_data
 
 
+@ns.route('/list')
 class ContratoListApi(ContratoApi):
+    api_doc = {
+         'id': 'O número identificador único de um contrato'
+       , 'orgao': 'Orgão que assinou o contrato com fornecedor'
+       , 'data_assinatura': 'Data de assinatura do contrato'
+       , 'vigencia': 'Número de dias que o contrato é válido'
+       , 'objeto': 'Parte do texto que aparece na descricao do contrato'
+       , 'modalidade': 'Modalidade do contrato'
+       , 'evento': 'Tipo de evento do contrato'
+       , 'processo_administrativo': 'Tipo do processo administrativo'
+       , 'cnpj': 'CNPJ do fornecedor que assinou o contrato'
+       , 'nome_fornecedor': 'Nome ou parte do fornecedor que assinou o contrato'
+       , 'valor': 'Valor do contrato'
+       , 'licitacao': 'Número da licitação do contrato'
+       , 'data_publicacao': 'Data de publicação do contrato' }
 
-    @restful.marshal_with(contratos_fields)
+#    @api.expect(contratos_model)
+    @api.doc(parser=contratos_list_parser, params=api_doc)
+    @api.marshal_with(contratos_model)
     def get(self):
         contratos_data = db.session.query(Contrato)
 
@@ -152,7 +176,7 @@ class ContratoListApi(ContratoApi):
 
         return contratos_data.all(), 200, headers
 
-contratos_api.add_resource(ContratoListApi, '/contrato/list')
+#contratos_api.add_resource(ContratoListApi, '/contrato/list')
 
 
 class ContratoAggregateApi(ContratoApi):

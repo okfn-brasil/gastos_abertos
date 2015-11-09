@@ -59,7 +59,6 @@ arguments = {
     },
 }
 
-
 def create_parser(*args):
     '''Create a parser for the passed arguments.'''
     parser = api.parser()
@@ -68,7 +67,6 @@ def create_parser(*args):
     return parser
 
 general_parser = create_parser(*arguments)
-
 
 @ns.route('/info')
 class ExecucaoInfoApi(Resource):
