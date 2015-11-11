@@ -37,19 +37,22 @@ def insert_rows(db, rows_data):
 
 
 def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
-    print("Importing Contratos from: " + csv_file)
+    print("Importing Contratos from: {}".format(csv_file))
     data = pd.read_excel(csv_file)
     data = data.fillna(-1)
 
     cache = {}
     to_insert = []
-    counter = ProgressCounter(len(data))
+    total = len(data)
+    inserted = 0
+    counter = ProgressCounter(total)
 
     for row_i, row in data.iterrows():
 
         r = {}
 
         if len(to_insert) == lines_per_insert:
+            inserted += len(to_insert)
             insert_rows(db, to_insert)
             to_insert = []
             # Progress counter
@@ -72,9 +75,12 @@ def insert_all(db, csv_file='../data/contratos-2014.xls', lines_per_insert=100):
         to_insert.append(r)
 
     if len(to_insert) > 0:
+        inserted += len(to_insert)
         insert_rows(db, to_insert)
 
     counter.end()
+
+    print("Imported {} Contratos".format(inserted))
 
 
 if __name__ == '__main__':
