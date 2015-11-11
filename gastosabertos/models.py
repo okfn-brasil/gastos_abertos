@@ -66,8 +66,11 @@ def _create_es_field(sa_type, es_kwargs, boost=None):
     if not es_type:
         return None
 
-    es_kwargs_ = ES_DEFAULT_OPTIONS.get(es_type, {})
-    es_kwargs_.update(es_kwargs or {})
+    es_kwargs = es_kwargs or {}
+    es_kwargs_ = {}
+    if not 'index' in es_kwargs or es_kwargs['index'] is not 'not_analyzed':
+        es_kwargs_ = ES_DEFAULT_OPTIONS.get(es_type, {})
+    es_kwargs_.update(es_kwargs)
 
     field = es_type(**es_kwargs_)
     field._search_boost = boost
@@ -125,6 +128,8 @@ class ES_QuerySet(object):
         self._search = search
         self._response = None
         self._sqlalchemy_query = None
+        self._filter_params = {}
+        self._sa_order_by = []
         self._vals = {
             'pos': 0,
             'size': 100,
@@ -141,6 +146,8 @@ class ES_QuerySet(object):
         if not self._sqlalchemy_query:
             self._sqlalchemy_query = self._model.filter(
                 self._model.id.in_([r._id for r in self._response]))
+        if self._sa_order_by:
+            self._sqlalchemy_query = self._sqlalchemy_query.order_by(*self._sa_order_by)
         return self._sqlalchemy_query
 
     def all(self):
@@ -153,11 +160,38 @@ class ES_QuerySet(object):
         return self._response.hits.total
 
     def order_by(self, *args, **kwargs):
-        print 'order_by is not implemented yet'
+        _order_by = []
+        self._sa_order_by = args[:] 
+        for arg in args:
+            try:
+                colname = arg.get_children()  # see sqlalchemy UnaryExpression
+                modifier = '-'
+                colname = str(colname[0])
+            except AttributeError:
+                modifier = ''
+                colname = arg
+            _order_by.append('{}{}'.format(modifier, colname))
+        self._search = self._search.sort(*_order_by)
         return self
 
     def filter(self, *args, **kwargs):
-        print 'filter is not implemented yet'
+        for expr in args:
+            left, right = expr.get_children()  # see sqlalchemy BinaryExpression
+            operator = expr.operator.__name__
+            try:
+                colname = left.name  # see sqlalchemy Column
+            except AttributeError:
+                colname = left
+            try:
+                value = right.effective_value  # see sqlalchemy BindParameter
+            except AttributeError:
+                value = right
+            if operator is 'ilike_op':
+                value = value.replace('%', '').lower()
+                self._search = self._search.query(ES_Q('match_phrase', **{colname: value}))
+            else:
+                self._search = self._search.query(ES_Q('match', **{colname: value}))
+            self._filter_params[colname] = value
         return self
 
     def offset(self, pos):
@@ -225,13 +259,14 @@ class _SearchableMixin(object):
 
     @classmethod
     def search(cls, query, fields=None, default_operator='and', fuzzy=False):
-        if fuzzy:
+        if query and fuzzy:
             return cls.fuzzy(query, fields)
         s, fieldnames = cls._prepare_search(query, fields=None)
-        s = s.query(ES_Q('simple_query_string', query=query,
-                         analyzer='ga_search_analyzer',
-                         default_operator=default_operator,
-                         fields=fieldnames))
+        if query:
+            s = s.query(ES_Q('simple_query_string', query=query,
+                             analyzer='ga_search_analyzer',
+                             default_operator=default_operator,
+                             fields=fieldnames))
         return ES_QuerySet(model=cls, search=s)
 
     @classmethod

@@ -26,7 +26,7 @@ execucao = Blueprint('execucao', __name__,
                      static_url_path='/execucao/static')
 
 
-ns = api.namespace('execucao', 'Dados sobre execução')
+ns = api.namespace('api/v1/execucao', 'Dados sobre execução')
 
 arguments = {
     'code': {
@@ -59,7 +59,6 @@ arguments = {
     },
 }
 
-
 def create_parser(*args):
     '''Create a parser for the passed arguments.'''
     parser = api.parser()
@@ -68,7 +67,6 @@ def create_parser(*args):
     return parser
 
 general_parser = create_parser(*arguments)
-
 
 @ns.route('/info')
 class ExecucaoInfoApi(Resource):

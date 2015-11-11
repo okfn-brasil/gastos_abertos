@@ -6,11 +6,13 @@ from jinja2 import TemplateNotFound
 from flask import Blueprint, render_template, abort, request
 from flask.ext.paginate import Pagination
 from flask.ext import restful
-from flask.ext.restful import fields
-from flask.ext.restful.reqparse import RequestParser
+#from flask.ext.restful import fields
+#from flask.ext.restful.reqparse import RequestParser
+from flask.ext.restplus.reqparse import RequestParser
+from flask.ext.restplus import Resource, fields
 
 from .models import Contrato
-from gastosabertos.extensions import db
+from gastosabertos.extensions import db, api
 
 # Blueprint for Contrato
 contratos = Blueprint('contratos', __name__,
@@ -20,7 +22,10 @@ contratos = Blueprint('contratos', __name__,
 
 
 # Create the restful API
-contratos_api = restful.Api(contratos, prefix="/api/v1")
+contratos_api = restful.Api(contratos)
+
+ns = api.namespace('api/v1/contrato', 'API para os contrato de São Paulo')
+
 # receita_api.decorators = [cors.crossdomain(origin='*')]
 
 # class Date(fields.Raw):
@@ -28,34 +33,44 @@ contratos_api = restful.Api(contratos, prefix="/api/v1")
 #         return str(value)
 
 # Parser for RevenueAPI arguments
-filter_parser = RequestParser()
-filter_parser.add_argument('cnpj')
-filter_parser.add_argument('orgao')
-filter_parser.add_argument('modalidade')
-filter_parser.add_argument('evento')
-filter_parser.add_argument('objeto')
-filter_parser.add_argument('processo_administrativo')
-filter_parser.add_argument('nome_fornecedor')
-filter_parser.add_argument('licitacao')
-filter_parser.add_argument('group_by', default='')
+_filter_parser = api.parser()
+_filter_parser.add_argument('cnpj')
+_filter_parser.add_argument('orgao')
+_filter_parser.add_argument('modalidade')
+_filter_parser.add_argument('evento')
+_filter_parser.add_argument('objeto')
+_filter_parser.add_argument('processo_administrativo')
+_filter_parser.add_argument('nome_fornecedor')
+_filter_parser.add_argument('licitacao')
+_filter_parser.add_argument('group_by', default='')
 
-order_by_parser = RequestParser()
-order_by_parser.add_argument('order_by', 'id')
+_order_by_parser = api.parser()
+_order_by_parser.add_argument('order_by')
 
-pagination_parser = RequestParser()
-pagination_parser.add_argument('page', type=int, default=0)
-pagination_parser.add_argument('per_page_num', type=int, default=100)
+_pagination_parser = api.parser()
+_pagination_parser.add_argument('page', type=int, default=0)
+_pagination_parser.add_argument('per_page_num', type=int, default=100)
 
-search_parser = RequestParser()
-search_parser.add_argument('fuzzy', type=bool, default=False)
-search_parser.add_argument('query')
+_query_parser = api.parser()
+_query_parser.add_argument('fuzzy', type=bool, default=False)
+_query_parser.add_argument('query')
+
+
+list_parser = api.parser()
+for arg in _filter_parser.args + _order_by_parser.args + _pagination_parser.args:
+    list_parser.add_argument(arg)
+
+search_parser = api.parser()
+for arg in _filter_parser.args + _order_by_parser.args + _pagination_parser.args + _query_parser.args:
+    search_parser.add_argument(arg)
+
 
 # Fields for ContratoAPI data marshal
-contratos_fields = {'id': fields.Integer(),
-                    'orgao': fields.String(),
+contratos_fields = {'id': fields.Integer(description='O número identificador único de um contrato'),
+                    'orgao': fields.String(description='Órgão'),
                     'data_assinatura': fields.DateTime(dt_format='iso8601'),
                     'vigencia': fields.Integer(),
-                    'objeto': fields.String(),
+                    'objeto': fields.String(description='Texto que aparece na descricao do contrato'),
                     'modalidade': fields.String(),
                     'evento': fields.String(),
                     'processo_administrativo': fields.String(),
@@ -66,12 +81,13 @@ contratos_fields = {'id': fields.Integer(),
                     'data_publicacao': fields.DateTime(dt_format='iso8601'),
                     }
 
+contratos_model = api.model('Contratos', contratos_fields) 
 
-class ContratoApi(restful.Resource):
+class ContratoApi(Resource):
 
     def filter(self, contratos_data):
         # Extract the arguments in GET request
-        args = filter_parser.parse_args()
+        args = _filter_parser.parse_args()
         cnpj = args['cnpj']
         nome_fornecedor = args['nome_fornecedor']
         orgao = args['orgao']
@@ -123,9 +139,9 @@ class ContratoApi(restful.Resource):
 
         return contratos_data
 
-    def order(self, contratos_data):
-        args = order_by_parser.parse_args()
-        order_by = args['order_by'].split(',')
+    def order(self, contratos_data, default=None):
+        args = _order_by_parser.parse_args()
+        order_by = (args['order_by'] or default or '').split(',')
 
         if order_by:
             order_by_args = []
@@ -144,7 +160,7 @@ class ContratoApi(restful.Resource):
         return contratos_data
 
     def paginate(self, contratos_data):
-        args = pagination_parser.parse_args()
+        args = _pagination_parser.parse_args()
         page = args['page']
         per_page_num = args['per_page_num']
 
@@ -155,18 +171,37 @@ class ContratoApi(restful.Resource):
         return contratos_data
 
 
+api_doc = {
+     'id': 'O número identificador único de um contrato'
+   , 'orgao': 'Orgão que assinou o contrato com fornecedor'
+   , 'data_assinatura': 'Data de assinatura do contrato'
+   , 'vigencia': 'Número de dias que o contrato é válido'
+   , 'objeto': 'Parte do texto que aparece na descricao do contrato'
+   , 'modalidade': 'Modalidade do contrato'
+   , 'evento': 'Tipo de evento do contrato'
+   , 'processo_administrativo': 'Tipo do processo administrativo'
+   , 'cnpj': 'CNPJ do fornecedor que assinou o contrato'
+   , 'nome_fornecedor': 'Nome ou parte do fornecedor que assinou o contrato'
+   , 'valor': 'Valor do contrato'
+   , 'licitacao': 'Número da licitação do contrato'
+   , 'data_publicacao': 'Data de publicação do contrato' }
+
+
+@ns.route('/list')
 class ContratoListApi(ContratoApi):
 
-    @restful.marshal_with(contratos_fields)
+#    @api.expect(contratos_model)
+    @api.doc(parser=list_parser, params=api_doc)
+    @api.marshal_with(contratos_model)
     def get(self):
         contratos_data = Contrato.filter()
 
-        contratos_data = self.order(contratos_data)
         contratos_data = self.filter(contratos_data)
 
         total_count = contratos_data.count()
 
         contratos_data = self.paginate(contratos_data)
+        contratos_data = self.order(contratos_data, default='id')
 
         headers = {
             # Add 'Access-Control-Expose-Headers' header here is a workaround
@@ -177,26 +212,32 @@ class ContratoListApi(ContratoApi):
 
         return contratos_data.all(), 200, headers
 
-contratos_api.add_resource(ContratoListApi, '/contrato/list')
+#contratos_api.add_resource(ContratoListApi, '/contrato/list')
 
 
+@ns.route('/search')
 class ContratoSearchApi(ContratoApi):
 
-    @restful.marshal_with(contratos_fields)
+    @api.doc(parser=search_parser, params={})
+    @api.marshal_with(contratos_model)
     def get(self):
-        args = search_parser.parse_args()
+        args = _query_parser.parse_args()
         query = args['query']
         fuzzy = args['fuzzy']
 
+        order_by_default = None if query else 'id'
+
         contratos_data = Contrato.search(query, fuzzy=fuzzy)
-
-        #contratos_data = self.order(contratos_data)
-        #contratos_data = self.filter(contratos_data)
-
+        contratos_data = self.filter(contratos_data)
         total_count = contratos_data.count()
 
+        if total_count is 0 and query and not fuzzy:
+          contratos_data = Contrato.search(query, fuzzy=True)
+          contratos_data = self.filter(contratos_data)
+          total_count = contratos_data.count()
+
         contratos_data = self.paginate(contratos_data)
-        print contratos_data
+        contratos_data = self.order(contratos_data, default=order_by_default)
 
         headers = {
             # Add 'Access-Control-Expose-Headers' header here is a workaround
@@ -207,13 +248,15 @@ class ContratoSearchApi(ContratoApi):
 
         return contratos_data.all(), 200, headers
 
-contratos_api.add_resource(ContratoSearchApi, '/contrato/search')
+#contratos_api.add_resource(ContratoSearchApi, '/contrato/search')
 
 
+#@ns.route('/aggregate')
 class ContratoAggregateApi(ContratoApi):
 
+    @api.doc(parser=list_parser, params={})
     def get(self):
-        args = contratos_list_parser.parse_args()
+        args = _filter_parser.parse_args()
         group_by = args['group_by'].split(',')
         group_by_fields = []
 
@@ -316,7 +359,7 @@ class ContratoAggregateApi(ContratoApi):
 
         return restful.marshal(result, fields_), 200, headers
 
-contratos_api.add_resource(ContratoAggregateApi, '/contrato/aggregate')
+#contratos_api.add_resource(ContratoAggregateApi, '/contrato/aggregate')
 
 
 @contratos.route('/contrato/<contract_id>')

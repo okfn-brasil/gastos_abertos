@@ -6,7 +6,7 @@ import os
 import re
 import codecs
 
-from utils import canonical_form
+from .utils import canonical_form
 
 
 # Backports fullmatch for Python < 3.4
