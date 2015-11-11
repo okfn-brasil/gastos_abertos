@@ -150,6 +150,9 @@ class ES_QuerySet(object):
             self._sqlalchemy_query = self._sqlalchemy_query.order_by(*self._sa_order_by)
         return self._sqlalchemy_query
 
+    def from_self(self):
+        return self
+
     def all(self):
         self._execute()
         self._do_sqlalchemy_query()

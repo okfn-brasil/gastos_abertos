@@ -200,8 +200,8 @@ class ContratoListApi(ContratoApi):
 
         total_count = contratos_data.count()
 
-        contratos_data = self.paginate(contratos_data)
         contratos_data = self.order(contratos_data, default='id')
+        contratos_data = self.paginate(contratos_data)
 
         headers = {
             # Add 'Access-Control-Expose-Headers' header here is a workaround
