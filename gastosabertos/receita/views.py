@@ -10,10 +10,13 @@ from flask import Blueprint, render_template, send_from_directory
 from flask.ext import restful
 from flask.ext.restful import fields
 # from flask.ext.restful.utils import cors
-from flask.ext.restful.reqparse import RequestParser
+#from flask.ext.restful.reqparse import RequestParser
+from flask.ext.restplus.reqparse import RequestParser
+from flask.ext.restplus import Resource, fields
+
 
 from .models import Revenue, RevenueCode
-from gastosabertos.extensions import db
+from gastosabertos.extensions import db, api
 
 # Blueprint for Receita
 receita = Blueprint('receita', __name__,
@@ -23,7 +26,9 @@ receita = Blueprint('receita', __name__,
 
 
 # Create the restful API
-receita_api = restful.Api(receita, prefix="/api/v1")
+receita_api = restful.Api(receita)
+ns = api.namespace('api/v1/receita', 'API para as Receitas da cidade de São Paulo')
+
 # receita_api.decorators = [cors.crossdomain(origin='*')]
 
 # class Date(fields.Raw):
@@ -45,10 +50,13 @@ revenue_fields = { 'id': fields.Integer()
                  , 'monthly_predicted': fields.Float()
                  , 'monthly_outcome': fields.Float() }
 
+revenues_model = api.model('Receitas', revenue_fields) 
 
-class RevenueApi(restful.Resource):
+@ns.route('/list')
+class RevenueApi(Resource):
 
-    @restful.marshal_with(revenue_fields)
+    @api.doc(parser=revenue_list_parser) 
+    @api.marshal_with(revenues_model)
     def get(self):
         # Extract the argumnets in GET request
         args = revenue_list_parser.parse_args()
@@ -288,7 +296,7 @@ class RevenueInfoApi(restful.Resource):
         return infos
 
 
-receita_api.add_resource(RevenueApi, '/receita/list')
+#receita_api.add_resource(RevenueApi, '/receita/list')
 receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 receita_api.add_resource(RevenueTotalApi, '/receita/total')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
