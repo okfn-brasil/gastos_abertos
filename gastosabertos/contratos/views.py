@@ -66,6 +66,7 @@ contratos_fields = { 'id': fields.Integer(description="O número identificador �
                    , 'licitacao': fields.String
                    , 'data_publicacao': fields.DateTime(dt_format='iso8601') }
 
+
 contratos_model = api.model('Contratos', contratos_fields) 
 
 class ContratoApi(Resource):
@@ -158,7 +159,6 @@ class ContratoListApi(ContratoApi):
        , 'licitacao': 'Número da licitação do contrato'
        , 'data_publicacao': 'Data de publicação do contrato' }
 
-#    @api.expect(contratos_model)
     @api.doc(parser=contratos_list_parser, params=api_doc)
     @api.marshal_with(contratos_model)
     def get(self):
@@ -176,10 +176,42 @@ class ContratoListApi(ContratoApi):
 
         return contratos_data.all(), 200, headers
 
-#contratos_api.add_resource(ContratoListApi, '/contrato/list')
+contratos_group_parser = api.parser()
+contratos_group_parser.add_argument('group_type')
 
+@ns.route('/count/<string:cnpj>')
+class ContratoCount(Resource):
+
+    group_types = { 'orgao': Contrato.orgao
+                  , 'evento': Contrato.evento
+                  , 'modalidade': Contrato.modalidade }
+
+
+    default_group = 'orgao'
+
+    api_doc = { 'cnpj': 'O CNPJ do fornecedor que será consultado, sem sinais como espaço, "." e  "/"'
+              , 'group_type': 'Um dos valores "orgao" (padrão), "modalidade" ou "evento"'}
+
+    @api.doc(parser=contratos_group_parser, params=api_doc)
+    def get(self, cnpj):
+        args = contratos_group_parser.parse_args()
+        group_type = args['group_type']
+
+        if group_type in ['orgao', 'modalidade', 'evento']:
+            group_field = self.group_types[group_type]
+        else:
+            group_field = self.group_types[self.default_group]
+ 
+        contratos_data = db.session.query(group_field, func.count(Contrato.id))
+        cnpj = "{}.{}.{}/{}-{}".format(cnpj[0:2], cnpj[2:5], cnpj[5:8], cnpj[8:12], cnpj[12:14])
+        contratos_data = contratos_data.filter(Contrato.cnpj == cnpj).group_by(group_field)
+        return contratos_data.all()
+ 
 
 class ContratoAggregateApi(ContratoApi):
+    api_doc = {
+
+    }
 
     def get(self):
         args = contratos_list_parser.parse_args()
