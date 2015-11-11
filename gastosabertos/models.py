@@ -102,6 +102,14 @@ def _create_es_doctype_class(name, index, fields):
     return cls
 
 
+def _remove_boost(fieldnames):
+    import re
+    without_boost = []
+    for fieldname in fieldnames:
+        without_boost.append(re.sub(r'\^.*', '', fieldname))
+    return without_boost
+
+
 class Column(SA_Column):
     def __init__(self, type_, primary_key=False,
                  searchable=None, search_config=None, boost=None,
@@ -123,13 +131,14 @@ class Column(SA_Column):
 
 class ES_QuerySet(object):
 
-    def __init__(self, model, search, vals=None):
+    def __init__(self, model, search, vals=None, highlight=False):
         self._model = model
         self._search = search
         self._response = None
         self._sqlalchemy_query = None
         self._filter_params = {}
         self._sa_order_by = []
+        self._highlight = highlight
         self._vals = {
             'pos': 0,
             'size': 100,
@@ -156,7 +165,20 @@ class ES_QuerySet(object):
     def all(self):
         self._execute()
         self._do_sqlalchemy_query()
-        return self._sqlalchemy_query.all()
+        result = self._sqlalchemy_query.all()
+        meta = {int(response.meta.id): response.meta for response in self._response}
+	return_ = []
+        for element in result:
+            if self._highlight:
+                for fieldname, highlighted in meta[element.id].highlight.to_dict().items():
+                    try:
+                        for partial in highlighted:
+                            partial_orig = partial.replace('<b>', '').replace('</b>', '')
+                            setattr(element, fieldname, getattr(element, fieldname).replace(partial_orig, partial))
+                    except AttributeError:
+                        pass
+            return_.append(element)
+	return return_
 
     def count(self):
         self._execute()
@@ -191,25 +213,25 @@ class ES_QuerySet(object):
                 value = right
             if operator is 'ilike_op':
                 value = value.replace('%', '').lower()
-                self._search = self._search.query(ES_Q('match_phrase', **{colname: value}))
+                search = self._search.query(ES_Q('match_phrase', **{colname: value}))
             else:
-                self._search = self._search.query(ES_Q('match', **{colname: value}))
+                search = self._search.query(ES_Q('match', **{colname: value}))
             self._filter_params[colname] = value
-        return self
+        return self.__class__(self._model, search, self._vals, self._highlight)
 
     def offset(self, pos):
         vals = self._vals.copy()
         vals.update(pos=pos)
         start = pos
         stop = start + vals['size']
-        return self.__class__(self._model, self._search[start:stop], vals)
+        return self.__class__(self._model, self._search[start:stop], vals, self._highlight)
 
     def limit(self, size):
         vals = self._vals.copy()
         vals.update(size=size)
         start = vals['pos']
         stop = start + size
-        return self.__class__(self._model, self._search[start:stop], vals)
+        return self.__class__(self._model, self._search[start:stop], vals, self._highlight)
 
 
 class _SearchableMixinMeta(type):
@@ -253,24 +275,33 @@ class _SearchableMixin(object):
         return s, fieldnames
 
     @classmethod
-    def fuzzy(cls, query, fields=None):
+    def fuzzy(cls, query, fields=None, highlight=False):
         s, fieldnames = cls._prepare_search(query, fields=None)
-        s = s.query(ES_Q('fuzzy_like_this', like_text=query,
-                         analyzer='ga_search_analyzer',
-                         fields=fieldnames))
-        return ES_QuerySet(model=cls, search=s)
+        highlight_ = False
+        if query:
+            s = s.query(ES_Q('fuzzy_like_this', like_text=query,
+                             analyzer='ga_search_analyzer',
+                             fields=fieldnames))
+            if highlight:
+                s = s.highlight(*_remove_boost(fieldnames), pre_tags=['<b>'], post_tags=['</b>'])
+                highlight_ = True
+        return ES_QuerySet(model=cls, search=s, highlight=highlight_)
 
     @classmethod
-    def search(cls, query, fields=None, default_operator='and', fuzzy=False):
+    def search(cls, query, fields=None, default_operator='and', fuzzy=False, highlight=False):
         if query and fuzzy:
-            return cls.fuzzy(query, fields)
+            return cls.fuzzy(query, fields, highlight)
         s, fieldnames = cls._prepare_search(query, fields=None)
+        highlight_ = False
         if query:
             s = s.query(ES_Q('simple_query_string', query=query,
                              analyzer='ga_search_analyzer',
                              default_operator=default_operator,
                              fields=fieldnames))
-        return ES_QuerySet(model=cls, search=s)
+            if highlight:
+                s = s.highlight(*_remove_boost(fieldnames), pre_tags=['<b>'], post_tags=['</b>'])
+                highlight_ = True
+        return ES_QuerySet(model=cls, search=s, highlight=highlight_)
 
     @classmethod
     def suggestions(cls, text, field=None):
