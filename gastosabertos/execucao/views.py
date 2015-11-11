@@ -26,7 +26,7 @@ execucao = Blueprint('execucao', __name__,
                      static_url_path='/execucao/static')
 
 
-ns = api.namespace('execucao', 'Dados sobre execução')
+ns = api.namespace('api/v1/execucao', 'Dados sobre execução')
 
 arguments = {
     'code': {

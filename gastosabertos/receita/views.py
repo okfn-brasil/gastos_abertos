@@ -63,7 +63,7 @@ class RevenueApi(restful.Resource):
         if code:
             code_levels = code.split('.')
             query_levels = [revenue_levels[l] == v for l, v in enumerate(code_levels)]
-            revenue_data = revenue_data .filter(and_(*query_levels))
+            revenue_data = revenue_data.filter(and_(*query_levels))
 
         if years:
             # Filter years

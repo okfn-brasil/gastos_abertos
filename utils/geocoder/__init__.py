@@ -9,8 +9,8 @@ import json
 import geopy
 from shapely.geometry import shape, Point
 
-from utils import canonical_form
-from terms import TermsDB
+from .utils import canonical_form
+from .terms import TermsDB
 
 
 # São Paulo bondaries

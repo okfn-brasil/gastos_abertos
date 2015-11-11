@@ -31,6 +31,11 @@ setup(
         'pandas',
         'geopy',
         'shapely',
+        'psycopg2',
+        'xlrd',
+        'elasticsearch>=1.0.0,<2.0.0',
+        'elasticsearch-dsl',
+	'futures',
     ],
     classifiers=[
         'Environment :: Web Environment',

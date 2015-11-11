@@ -1,0 +1,24 @@
+index:
+  analysis:
+    analyzer:
+      ga_analyzer:
+        type:      custom
+        tokenizer: standard
+        filter:    [brazilian_stopwords, asciifolding, lowercase, snowball, word_delimiter]
+      ga_search_analyzer:
+        type:      custom
+        tokenizer: standard
+        filter:    [brazilian_stopwords, asciifolding, lowercase, snowball, word_delimiter]
+    tokenizer:
+      ga_ngram_tokenizer:
+        type: nGram
+        min_gram: 3
+        max_gram: 25
+    filter:
+      snowball:
+        type:     snowball
+        language: portuguese
+      brazilian_stopwords:
+        type:      stop
+        stopwords: _brazilian_
+        ignore_case: true
