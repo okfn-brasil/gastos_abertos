@@ -53,6 +53,7 @@ _pagination_parser.add_argument('per_page_num', type=int, default=100)
 
 _query_parser = api.parser()
 _query_parser.add_argument('fuzzy', type=bool, default=False)
+_query_parser.add_argument('highlight', type=bool, default=True)
 _query_parser.add_argument('query')
 
 
@@ -79,6 +80,7 @@ contratos_fields = {'id': fields.Integer(description='O número identificador ú
                     'valor': fields.Float(),
                     'licitacao': fields.String(),
                     'data_publicacao': fields.DateTime(dt_format='iso8601'),
+                    'txt_file_url': fields.String(),
                     }
 
 contratos_model = api.model('Contratos', contratos_fields) 
@@ -223,16 +225,17 @@ class ContratoSearchApi(ContratoApi):
     def get(self):
         args = _query_parser.parse_args()
         query = args['query']
+        highlight = args['highlight']
         fuzzy = args['fuzzy']
 
         order_by_default = None if query else 'id'
 
-        contratos_data = Contrato.search(query, fuzzy=fuzzy)
+        contratos_data = Contrato.search(query, fuzzy=fuzzy, highlight=highlight)
         contratos_data = self.filter(contratos_data)
         total_count = contratos_data.count()
 
         if total_count is 0 and query and not fuzzy:
-          contratos_data = Contrato.search(query, fuzzy=True)
+          contratos_data = Contrato.search(query, fuzzy=True, highlight=highlight)
           contratos_data = self.filter(contratos_data)
           total_count = contratos_data.count()
 
