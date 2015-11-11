@@ -177,7 +177,7 @@ class ES_QuerySet(object):
                             setattr(element, fieldname, getattr(element, fieldname).replace(partial_orig, partial))
                     except AttributeError:
                         try:
-                            excerpt = u' ... '.join(highlighted).replace('\n', '')
+                            excerpt = u' ... '.join(highlighted).replace('\n', ' ')
                             setattr(element, '{}_highlight'.format(fieldname), u'... {} ...'.format(excerpt))
                         except (UnicodeEncodeError, AttributeError):
                             pass
