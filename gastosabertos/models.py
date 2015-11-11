@@ -176,7 +176,11 @@ class ES_QuerySet(object):
                             partial_orig = partial.replace('<b>', '').replace('</b>', '')
                             setattr(element, fieldname, getattr(element, fieldname).replace(partial_orig, partial))
                     except AttributeError:
-                        pass
+                        try:
+                            excerpt = u' ... '.join(highlighted).replace('\n', '')
+                            setattr(element, '{}_highlight'.format(fieldname), u'... {} ...'.format(excerpt))
+                        except (UnicodeEncodeError, AttributeError):
+                            pass
             return_.append(element)
 	return return_
 
@@ -283,7 +287,9 @@ class _SearchableMixin(object):
                              analyzer='ga_search_analyzer',
                              fields=fieldnames))
             if highlight:
-                s = s.highlight(*_remove_boost(fieldnames), pre_tags=['<b>'], post_tags=['</b>'])
+                s = s.highlight(*_remove_boost(fieldnames), 
+                               pre_tags=['<b>'], post_tags=['</b>'], 
+                               fragment_size=400, number_of_fragments=3)
                 highlight_ = True
         return ES_QuerySet(model=cls, search=s, highlight=highlight_)
 
@@ -299,7 +305,9 @@ class _SearchableMixin(object):
                              default_operator=default_operator,
                              fields=fieldnames))
             if highlight:
-                s = s.highlight(*_remove_boost(fieldnames), pre_tags=['<b>'], post_tags=['</b>'])
+                s = s.highlight(*_remove_boost(fieldnames), 
+                               pre_tags=['<b>'], post_tags=['</b>'], 
+                               fragment_size=400, number_of_fragments=3)
                 highlight_ = True
         return ES_QuerySet(model=cls, search=s, highlight=highlight_)
 

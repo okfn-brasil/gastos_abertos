@@ -53,7 +53,7 @@ _pagination_parser.add_argument('per_page_num', type=int, default=100)
 
 _query_parser = api.parser()
 _query_parser.add_argument('fuzzy', type=bool, default=False)
-_query_parser.add_argument('highlight', type=bool, default=True)
+_query_parser.add_argument('highlight', type=bool, default=False)
 _query_parser.add_argument('query')
 
 
@@ -81,10 +81,14 @@ contratos_fields = {'id': fields.Integer(description='O número identificador ú
                     'licitacao': fields.String(),
                     'data_publicacao': fields.DateTime(dt_format='iso8601'),
                     'txt_file_url': fields.String(),
+                    'file_url': fields.String(),
                     }
 
+contratos_search_fields = {'content_highlight': fields.String() }
+contratos_search_fields.update(contratos_fields)
 
 contratos_model = api.model('Contratos', contratos_fields) 
+contratos_search_model = api.model('Contratos', contratos_search_fields) 
 
 class ContratoApi(Resource):
 
@@ -250,7 +254,7 @@ class ContratoCount(Resource):
 class ContratoSearchApi(ContratoApi):
 
     @api.doc(parser=search_parser, params={})
-    @api.marshal_with(contratos_model)
+    @api.marshal_with(contratos_search_model)
     def get(self):
         args = _query_parser.parse_args()
         query = args['query']
