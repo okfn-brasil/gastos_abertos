@@ -283,8 +283,14 @@ class RevenueSeriesApi(restful.Resource):
         return series
 
 
-class RevenueInfoApi(restful.Resource):
+# Fields for RevenueAPI data marshal
+revenue_info_fields = { 'year': fields.Integer() }
 
+revenues_info_model = api.model('Receitas', revenue_info_fields)
+@ns.route('/info')
+class RevenueInfoApi(Resource):
+
+    @api.marshal_with(revenues_info_model)
     def get(self):
         ext = extract('year', Revenue.date)
         dbyears = db.session.query(ext).group_by(ext).all()
@@ -301,7 +307,7 @@ receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 receita_api.add_resource(RevenueTotalApi, '/receita/total')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
 receita_api.add_resource(RevenueSeriesApi, '/receita/series')
-receita_api.add_resource(RevenueInfoApi, '/receita/info')
+#receita_api.add_resource(RevenueInfoApi, '/receita/info')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')
 # df_receita = pd.read_csv(csv_receita, encoding='utf8')
