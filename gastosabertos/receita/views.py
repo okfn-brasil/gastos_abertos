@@ -248,7 +248,7 @@ revenueseries_code_parser = RequestParser()
 # type of argument defaults to unicode in python2 and str in python3
 revenueseries_code_parser.add_argument('code', action='append')
 
-
+@ns.route('/series')
 class RevenueSeriesApi(restful.Resource):
 
     def get(self):
@@ -286,7 +286,7 @@ class RevenueSeriesApi(restful.Resource):
 # Fields for RevenueAPI data marshal
 revenue_info_fields = { 'year': fields.Integer() }
 
-revenues_info_model = api.model('Receitas', revenue_info_fields)
+revenues_info_model = api.model('Receitas Info', revenue_info_fields)
 @ns.route('/info')
 class RevenueInfoApi(Resource):
 
@@ -306,7 +306,7 @@ class RevenueInfoApi(Resource):
 receita_api.add_resource(GroupedRevenueApi, '/receita/grouped')
 receita_api.add_resource(RevenueTotalApi, '/receita/total')
 receita_api.add_resource(RevenueCodeApi, '/receita/code')
-receita_api.add_resource(RevenueSeriesApi, '/receita/series')
+#receita_api.add_resource(RevenueSeriesApi, '/receita/series')
 #receita_api.add_resource(RevenueInfoApi, '/receita/info')
 
 # csv_receita = os.path.join(receita.root_path, 'static', 'receita-2008-01.csv')

@@ -3,7 +3,7 @@
 from sqlalchemy import func, desc
 from jinja2 import TemplateNotFound
 
-from flask import Blueprint, render_template, abort, request
+from flask import Blueprint, render_template, abort, request, Response
 from flask.ext.paginate import Pagination
 from flask.ext import restful
 #from flask.ext.restful import fields
@@ -87,8 +87,8 @@ contratos_fields = {'id': fields.Integer(description='O número identificador ú
 contratos_search_fields = {'content_highlight': fields.String() }
 contratos_search_fields.update(contratos_fields)
 
-contratos_model = api.model('Contratos', contratos_fields) 
-contratos_search_model = api.model('Contratos', contratos_search_fields) 
+contratos_model = api.model('Contratos', contratos_fields)
+contratos_search_model = api.model('Contratos', contratos_search_fields)
 
 class ContratoApi(Resource):
 
@@ -194,9 +194,37 @@ api_doc = {
    , 'data_publicacao': 'Data de publicação do contrato' }
 
 
+def with_csv(filename="output.csv"):
+    ''' Decorator to transforma an JSON output in a CSV in a naive way'''
+    def with_csv_output(method):
+        def view_plus_csv(*args, **kwargs):
+            output_csv = bool(request.args.get('csv', False))
+
+            if not output_csv:
+                return method(*args, **kwargs)
+            else:
+                output = method(*args, **kwargs)
+                csv = ''
+                wrote_header = False
+                for line in  output[0]:
+                    if not wrote_header:
+                        csv +=  ','.join([u'"{}"'.format(v) for v in line.keys()]) + '\n'
+                        wrote_header = True
+
+                    for value in line.values()[:-1]:
+                        csv += u'"{}", '.format(value)
+                    csv += u'"{}"\n'.format(line.values()[-1])
+
+                return Response(csv,
+                               mimetype="text/csv",
+                               headers={"Content-Disposition": "attachment;filename={}".format(filename)})
+        return view_plus_csv
+    return with_csv_output
+
 @ns.route('/list')
 class ContratoListApi(ContratoApi):
 
+    @with_csv('contratos.csv')
     @api.doc(parser=list_parser, params=api_doc)
     @api.marshal_with(contratos_model)
     def get(self):
@@ -243,12 +271,12 @@ class ContratoCount(Resource):
             group_field = self.group_types[group_type]
         else:
             group_field = self.group_types[self.default_group]
- 
+
         contratos_data = db.session.query(group_field, func.count(Contrato.id))
         cnpj = "{}.{}.{}/{}-{}".format(cnpj[0:2], cnpj[2:5], cnpj[5:8], cnpj[8:12], cnpj[12:14])
         contratos_data = contratos_data.filter(Contrato.cnpj == cnpj).group_by(group_field)
         return contratos_data.all()
- 
+
 
 @ns.route('/search')
 class ContratoSearchApi(ContratoApi):
