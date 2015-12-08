@@ -73,7 +73,7 @@ contratos_fields = {'id': fields.Integer(description='O número identificador ú
                     'data_assinatura': fields.DateTime(dt_format='iso8601'),
                     'vigencia': fields.Integer(),
                     'objeto': fields.String(description='Texto que aparece na descricao do contrato'),
-                    'modalidade': fields.String(),
+                    'modalidade': fields.String(description='e.g. Pregão'),
                     'evento': fields.String(),
                     'processo_administrativo': fields.String(),
                     'cnpj': fields.String(),
