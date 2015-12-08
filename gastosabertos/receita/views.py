@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy import and_, extract, func
 from datetime import datetime
 
-from flask import Blueprint, render_template, send_from_directory
+from flask import Blueprint, render_template, send_from_directory, Response, request
 from flask.ext import restful
 from flask.ext.restful import fields
 # from flask.ext.restful.utils import cors
@@ -16,6 +16,7 @@ from flask.ext.restplus import Resource, fields
 
 
 from .models import Revenue, RevenueCode
+from ..utils import with_csv
 from gastosabertos.extensions import db, api
 
 # Blueprint for Receita
@@ -50,12 +51,13 @@ revenue_fields = { 'id': fields.Integer()
                  , 'monthly_predicted': fields.Float()
                  , 'monthly_outcome': fields.Float() }
 
-revenues_model = api.model('Receitas', revenue_fields) 
+revenues_model = api.model('Receitas', revenue_fields)
 
 @ns.route('/list')
 class RevenueApi(Resource):
 
-    @api.doc(parser=revenue_list_parser) 
+    @with_csv('receita.csv')
+    @api.doc(parser=revenue_list_parser)
     @api.marshal_with(revenues_model)
     def get(self):
         # Extract the argumnets in GET request
