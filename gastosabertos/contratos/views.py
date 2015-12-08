@@ -198,8 +198,8 @@ api_doc = {
 @ns.route('/list')
 class ContratoListApi(ContratoApi):
 
-    @with_csv('contratos.csv')
     @api.doc(parser=list_parser, params=api_doc)
+    @with_csv('contratos.csv')
     @api.marshal_with(contratos_model)
     def get(self):
         contratos_data = Contrato.filter()
@@ -256,6 +256,7 @@ class ContratoCount(Resource):
 class ContratoSearchApi(ContratoApi):
 
     @api.doc(parser=search_parser, params={})
+    @with_csv('contratos.csv')
     @api.marshal_with(contratos_search_model)
     def get(self):
         args = _query_parser.parse_args()
